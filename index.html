@@ -12,61 +12,35 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --navy:#0f2744;--navy2:#1b3d5f;
-  --gold:#b8973a;--gold2:#9a7c2e;
-  --accent:#1d6fa8;
-  --green:#0a7c4e;--green2:#086040;
-  --danger:#c0392b;
-  --bg:#eef1f7;--card:#fff;
-  --border:#d5dce8;--border2:#c2cbda;
-  --text:#0d1b2a;--muted:#5a6a7e;--hint:#8fa0b4;
-  --tag-s-bg:#dbeafe;--tag-s-c:#1e3a8a;
-  --tag-d-bg:#fef3c7;--tag-d-c:#78350f;
-  --radius:14px;--rsm:9px;
-  --shadow:0 2px 12px rgba(15,39,68,.10);
-  --shadow2:0 4px 20px rgba(15,39,68,.18);
-}
+:root{--navy:#0f2744;--navy2:#1b3d5f;--gold:#b8973a;--gold2:#9a7c2e;--accent:#1d6fa8;--green:#0a7c4e;--green2:#086040;--danger:#c0392b;--bg:#eef1f7;--card:#fff;--border:#d5dce8;--border2:#c2cbda;--text:#0d1b2a;--muted:#5a6a7e;--hint:#8fa0b4;--tag-s-bg:#dbeafe;--tag-s-c:#1e3a8a;--tag-d-bg:#fef3c7;--tag-d-c:#78350f;--radius:14px;--rsm:9px;--shadow:0 2px 12px rgba(15,39,68,.10);--shadow2:0 4px 20px rgba(15,39,68,.18)}
 html,body{height:100%;background:var(--bg);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text);font-size:15px;overflow:hidden}
 #app{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
-
-/* Header */
 .hdr{background:var(--navy);padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.28)}
 .hdr-inner{display:flex;align-items:center;gap:10px;padding:12px 16px}
 .hdr h1{font-size:15px;font-weight:700;color:#fff;flex:1;letter-spacing:.2px}
 .hdr-logo{width:30px;height:30px;border-radius:6px;object-fit:contain;background:#fff;padding:2px;flex-shrink:0}
 .hdr-av{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);display:none;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);flex-shrink:0}
 .hdr-back{background:none;border:none;color:rgba(255,255,255,.85);font-size:24px;cursor:pointer;padding:0 2px;line-height:1;display:none;flex-shrink:0}
-
-/* Screens */
 .screens{flex:1;overflow:hidden;position:relative}
 .screen{position:absolute;inset:0;overflow-y:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0));display:flex;flex-direction:column;gap:14px;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s}
 .screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
 .screen.slide-left{transform:translateX(-40%);opacity:0;pointer-events:none}
-
-/* Cards & Buttons */
-.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
 .ac{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:transform .15s,box-shadow .15s;border:none;width:100%;text-align:left}
 .ac:active{transform:scale(.97);box-shadow:var(--shadow2)}
 .ac-ico{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
 .ac h2{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
 .ac p{font-size:12px;color:var(--muted);line-height:1.45}
-
-/* Forms */
 .fl{display:flex;flex-direction:column;gap:5px}
 .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
 .inp{background:var(--card);border:1.5px solid var(--border);border-radius:var(--rsm);padding:11px 13px;font-size:15px;color:var(--text);width:100%;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,168,.15)}
 textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-
-/* Buttons */
+.r-items{display:grid;grid-template-columns:2fr 1fr;gap:11px;align-items:start}
 .btn{width:100%;padding:14px;border-radius:var(--rsm);font-size:15px;font-weight:700;border:none;cursor:pointer;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn:active{transform:scale(.97)}
 .btn-navy{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(15,39,68,.25)}
@@ -79,53 +53,35 @@ textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .btn-excel{background:#1d6f42;color:#fff;box-shadow:0 2px 8px rgba(29,111,66,.3)}
 .btn-excel:active{background:#155232}
 .btn-sm{width:auto;padding:9px 16px;font-size:13px}
-
-/* Photo */
 .pa{background:#f5f8fc;border:2px dashed var(--border2);border-radius:var(--rsm);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
 .pa:active{border-color:var(--accent)}
 .pa img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pa-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
 .pa-ov span{color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:20px}
 .pa-hint{font-size:12px;color:var(--hint);text-align:center;padding:0 16px}
-
-/* Stats */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .st{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;text-align:center}
 .stn{font-size:30px;font-weight:800;line-height:1}
 .stl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600}
-
-/* Tags */
 .tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;white-space:nowrap}
 .tag-s{background:var(--tag-s-bg);color:var(--tag-s-c)}
 .tag-d{background:var(--tag-d-bg);color:var(--tag-d-c)}
-
-/* Tabs */
 .tabs{display:flex;background:var(--card);border-radius:var(--rsm);padding:3px;gap:3px;box-shadow:var(--shadow)}
 .tab{flex:1;padding:8px 4px;border:none;background:transparent;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s}
 .tab.on{background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(15,39,68,.3)}
-
-/* Record Cards */
 .rc{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;cursor:pointer;transition:transform .12s;border:none;width:100%;text-align:left}
 .rc:active{transform:scale(.98)}
 .rc h3{font-size:14px;font-weight:700;margin-bottom:6px}
 .rmeta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-
-/* User Chip */
 .uc{background:linear-gradient(135deg,#e8f0fb,#ddeaf9);border:1px solid #c7d8f0;border-radius:var(--rsm);padding:12px 14px;display:flex;align-items:center;gap:12px}
 .av{width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
-
-/* Login */
 .login-wrap{justify-content:center;min-height:100%}
 .logo{text-align:center;margin-bottom:8px;padding:8px 0}
 .logo-img{width:90px;height:90px;object-fit:contain;margin:0 auto 10px;display:block}
 .logo h2{font-size:21px;font-weight:800;color:var(--navy);letter-spacing:-.3px}
 .logo p{font-size:13px;color:var(--muted);margin-top:4px}
-
-/* Alerts */
 .err{background:#fef2f2;border:1.5px solid #fecaca;border-radius:var(--rsm);padding:11px 13px;font-size:13px;color:var(--danger);display:none}
 hr.div{border:none;border-top:1.5px solid var(--border);margin:2px 0}
-
-/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 .modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0));width:100%;max-width:430px;max-height:88vh;overflow-y:auto;animation:slideup .25s cubic-bezier(.4,0,.2,1)}
@@ -136,54 +92,38 @@ hr.div{border:none;border-top:1.5px solid var(--border);margin:2px 0}
 .dr:last-child{border-bottom:none}
 .dl{color:var(--muted);flex-shrink:0;margin-right:12px}
 .dv{font-weight:600;text-align:right;word-break:break-word}
-
-/* Toast */
 .toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%);background:rgba(15,25,40,.92);color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:200;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;backdrop-filter:blur(8px)}
 .toast.on{opacity:1}
-
-/* Loader / Empty */
 .ld{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:50px 20px;color:var(--muted);font-size:13px}
 .spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .em{display:flex;flex-direction:column;align-items:center;gap:8px;padding:44px 20px;color:var(--muted)}
 .em-ico{font-size:44px}
-
-/* Install banner */
 .install-banner{background:var(--navy);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;flex-shrink:0}
 .install-banner img{width:32px;height:32px;border-radius:7px;background:#fff;padding:2px;object-fit:contain}
 .install-banner .ib-text{flex:1;line-height:1.4}
 .install-banner .ib-text b{display:block;font-size:13px}
-.install-banner button{background:var(--gold);border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.install-banner .ib-install{background:var(--gold);border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .install-banner .ib-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0}
-
 input[type=file]{display:none}
 </style>
 </head>
 <body>
 <div id="app">
-
-  <!-- Install Banner (shown on Android Chrome) -->
   <div class="install-banner" id="install-banner" style="display:none">
     <img src="icon-192.png" alt="CPC">
-    <div class="ib-text">
-      <b>Install CPC Reports</b>
-      Add to your home screen
-    </div>
-    <button id="install-btn">Install</button>
-    <button class="ib-close" onclick="dismissInstall()">✕</button>
+    <div class="ib-text"><b>Install CPC Reports</b>Add to your home screen</div>
+    <button class="ib-install" id="install-btn">Install</button>
+    <button class="ib-close" onclick="dismissInstall()">&#x2715;</button>
   </div>
-
-  <!-- Header -->
   <div class="hdr">
     <div class="hdr-inner">
-      <button class="hdr-back" id="hdr-back" onclick="App.goBack()">‹</button>
+      <button class="hdr-back" id="hdr-back" onclick="App.goBack()">&#8249;</button>
       <img class="hdr-logo" src="icon-192.png" alt="CPC" id="hdr-logo">
       <h1 id="hdr-title">CPC Site Reports</h1>
       <div class="hdr-av" id="hdr-av" onclick="App.logout()" title="Tap to sign out">--</div>
     </div>
   </div>
-
-  <!-- Screens -->
   <div class="screens">
 
     <!-- LOGIN -->
@@ -193,14 +133,8 @@ input[type=file]{display:none}
         <h2>CPC Site Reports</h2>
         <p>Sign in to continue</p>
       </div>
-      <div class="fl">
-        <div class="lbl">Email</div>
-        <input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email">
-      </div>
-      <div class="fl">
-        <div class="lbl">Password</div>
-        <input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password">
-      </div>
+      <div class="fl"><div class="lbl">Email</div><input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
+      <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password"></div>
       <div class="err" id="l-err"></div>
       <button class="btn btn-navy" onclick="App.login()">Sign In</button>
       <button class="btn btn-ghost" onclick="App.show('register')">Create New Account</button>
@@ -213,33 +147,17 @@ input[type=file]{display:none}
         <h2>Create Account</h2>
         <p>Register to use CPC Site Reports</p>
       </div>
-      <div class="fl">
-        <div class="lbl">Full Name</div>
-        <input class="inp" id="r-name" placeholder="e.g. Ahmad Bin Ali" autocomplete="name">
-      </div>
-      <div class="fl">
-        <div class="lbl">Role / Position</div>
+      <div class="fl"><div class="lbl">Full Name</div><input class="inp" id="r-name" placeholder="e.g. Ahmad Bin Ali" autocomplete="name"></div>
+      <div class="fl"><div class="lbl">Role / Position</div>
         <select class="inp" id="r-role">
           <option value="">Select role...</option>
-          <option>Site Supervisor</option>
-          <option>Safety Officer</option>
-          <option>Project Manager</option>
-          <option>Foreman</option>
-          <option>Engineer</option>
-          <option>Inspector</option>
-          <option>Storekeeper</option>
-          <option>Driver</option>
-          <option>Other</option>
+          <option>Site Supervisor</option><option>Safety Officer</option><option>Project Manager</option>
+          <option>Foreman</option><option>Engineer</option><option>Inspector</option>
+          <option>Storekeeper</option><option>Driver</option><option>Other</option>
         </select>
       </div>
-      <div class="fl">
-        <div class="lbl">Email</div>
-        <input class="inp" id="r-email" type="email" placeholder="you@cpc.com" autocomplete="email">
-      </div>
-      <div class="fl">
-        <div class="lbl">Password</div>
-        <input class="inp" id="r-pass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
-      </div>
+      <div class="fl"><div class="lbl">Email</div><input class="inp" id="r-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
+      <div class="fl"><div class="lbl">Password</div><input class="inp" id="r-pass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password"></div>
       <div class="err" id="r-err"></div>
       <button class="btn btn-gold" onclick="App.register()">Create Account</button>
       <button class="btn btn-ghost" onclick="App.show('login')">Back to Sign In</button>
@@ -250,41 +168,26 @@ input[type=file]{display:none}
       <div class="uc">
         <div class="av" id="home-ini">?</div>
         <div>
-          <div style="font-size:14px;font-weight:700" id="home-name">—</div>
-          <div style="font-size:12px;color:var(--muted)" id="home-role">—</div>
+          <div style="font-size:14px;font-weight:700" id="home-name">-</div>
+          <div style="font-size:12px;color:var(--muted)" id="home-role">-</div>
         </div>
       </div>
       <div class="sg">
-        <div class="st">
-          <div class="stn" id="cnt-stock" style="color:var(--navy)">—</div>
-          <div class="stl">Stock Reports</div>
-        </div>
-        <div class="st">
-          <div class="stn" id="cnt-daily" style="color:#78350f">—</div>
-          <div class="stl">Daily Reports</div>
-        </div>
+        <div class="st"><div class="stn" id="cnt-stock" style="color:var(--navy)">-</div><div class="stl">Stock Reports</div></div>
+        <div class="st"><div class="stn" id="cnt-daily" style="color:#78350f">-</div><div class="stl">Daily Reports</div></div>
       </div>
       <div style="font-size:13px;font-weight:800;color:var(--navy)">Create New Report</div>
       <button class="ac" onclick="App.show('stock')">
-        <div class="ac-ico" style="background:#dbeafe">📦</div>
-        <div>
-          <h2>Stock Report</h2>
-          <p>Log material delivery — photo, from/to location, quantities, instructed by</p>
-        </div>
+        <div class="ac-ico" style="background:#dbeafe">&#128230;</div>
+        <div><h2>Stock Report</h2><p>Log material delivery - photo, from/to, qty, instructed by</p></div>
       </button>
       <button class="ac" onclick="App.show('daily')">
-        <div class="ac-ico" style="background:#fef3c7">📋</div>
-        <div>
-          <h2>Daily / Incident Report</h2>
-          <p>Work progress, site incidents, contractor activities with photos</p>
-        </div>
+        <div class="ac-ico" style="background:#fef3c7">&#128203;</div>
+        <div><h2>Daily / Incident Report</h2><p>Work progress, site incidents, contractor activities with photos</p></div>
       </button>
       <button class="ac" onclick="App.show('records')" style="padding:14px 16px">
-        <div class="ac-ico" style="background:#f0fdf4;font-size:22px">🗂️</div>
-        <div>
-          <h2>View &amp; Export Records</h2>
-          <p>Browse all reports — download as Excel (.xlsx)</p>
-        </div>
+        <div class="ac-ico" style="background:#f0fdf4;font-size:22px">&#128193;</div>
+        <div><h2>View &amp; Export Records</h2><p>Browse all reports - download as Excel (.xlsx)</p></div>
       </button>
       <button class="btn btn-ghost" onclick="App.logout()" style="margin-top:4px">Sign Out</button>
     </div>
@@ -294,47 +197,32 @@ input[type=file]{display:none}
       <div class="uc">
         <div class="av" id="stock-ini">?</div>
         <div>
-          <div style="font-size:13px;font-weight:700" id="stock-name">—</div>
-          <div style="font-size:11px;color:var(--muted)" id="stock-ts">—</div>
+          <div style="font-size:13px;font-weight:700" id="stock-name">-</div>
+          <div style="font-size:11px;color:var(--muted)" id="stock-ts">-</div>
         </div>
       </div>
-      <div class="fl">
-        <div class="lbl">Project / Site Name *</div>
-        <input class="inp" id="s-proj" placeholder="e.g. Marina Bay Tower Block A">
-      </div>
+      <div class="fl"><div class="lbl">Project / Site Name *</div><input class="inp" id="s-proj" placeholder="e.g. Marina Bay Tower Block A"></div>
       <div class="r2">
-        <div class="fl">
-          <div class="lbl">From *</div>
-          <input class="inp" id="s-from" placeholder="Warehouse A">
-        </div>
-        <div class="fl">
-          <div class="lbl">To *</div>
-          <input class="inp" id="s-to" placeholder="Level 3 Store">
-        </div>
+        <div class="fl"><div class="lbl">From *</div><input class="inp" id="s-from" placeholder="Warehouse A"></div>
+        <div class="fl"><div class="lbl">To *</div><input class="inp" id="s-to" placeholder="Level 3 Store"></div>
+      </div>
+      <div class="fl"><div class="lbl">Instructed By *</div><input class="inp" id="s-inst" placeholder="Name of person who instructed"></div>
+      <div class="fl"><div class="lbl">Received By</div><input class="inp" id="s-recv" placeholder="Name of person who received (optional)"></div>
+      <div class="r-items">
+        <div class="fl"><div class="lbl">Items / Description</div><textarea class="inp" id="s-items" placeholder="Item name, description..."></textarea></div>
+        <div class="fl"><div class="lbl">Qty / Unit</div><input class="inp" id="s-qty" placeholder="e.g. 10 pcs"></div>
       </div>
       <div class="fl">
-        <div class="lbl">Instructed By *</div>
-        <input class="inp" id="s-inst" placeholder="Name of person who instructed">
-      </div>
-      <div class="fl">
-        <div class="lbl">Received By *</div>
-        <input class="inp" id="s-recv" placeholder="Name of person who received">
-      </div>
-      <div class="fl">
-        <div class="lbl">Items / Description</div>
-        <textarea class="inp" id="s-items" placeholder="List items, quantities, condition, remarks..."></textarea>
-      </div>
-      <div class="fl">
-        <div class="lbl">Photo Evidence 📷</div>
+        <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="s-file" onchange="App.loadPhoto('s',this)">
         <div class="pa" id="s-pa" onclick="document.getElementById('s-file').click()">
-          <div style="font-size:36px">📷</div>
+          <div style="font-size:36px">&#128247;</div>
           <div class="pa-hint">Tap to take photo or choose from gallery</div>
         </div>
       </div>
       <div class="err" id="s-err"></div>
       <hr class="div">
-      <button class="btn btn-green" id="s-btn" onclick="App.submitStock()">✅ Submit Stock Report</button>
+      <button class="btn btn-green" id="s-btn" onclick="App.submitStock()">Submit Stock Report</button>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
@@ -343,82 +231,60 @@ input[type=file]{display:none}
       <div class="uc">
         <div class="av" id="daily-ini">?</div>
         <div>
-          <div style="font-size:13px;font-weight:700" id="daily-name">—</div>
-          <div style="font-size:11px;color:var(--muted)" id="daily-ts">—</div>
+          <div style="font-size:13px;font-weight:700" id="daily-name">-</div>
+          <div style="font-size:11px;color:var(--muted)" id="daily-ts">-</div>
         </div>
       </div>
-      <div class="fl">
-        <div class="lbl">Project / Site Name *</div>
-        <input class="inp" id="d-proj" placeholder="e.g. Marina Bay Tower Block A">
-      </div>
-      <div class="fl">
-        <div class="lbl">Report Type</div>
+      <div class="fl"><div class="lbl">Project / Site Name *</div><input class="inp" id="d-proj" placeholder="e.g. Marina Bay Tower Block A"></div>
+      <div class="fl"><div class="lbl">Report Type</div>
         <select class="inp" id="d-type">
-          <option>Daily Progress</option>
-          <option>Incident Report</option>
-          <option>Near Miss</option>
-          <option>Site Inspection</option>
-          <option>Toolbox Meeting</option>
-          <option>Other</option>
+          <option>Daily Progress</option><option>Incident Report</option><option>Near Miss</option>
+          <option>Site Inspection</option><option>Toolbox Meeting</option><option>Other</option>
         </select>
       </div>
+      <div class="fl"><div class="lbl">Contractor / Subcontractor *</div><input class="inp" id="d-cont" placeholder="e.g. ABC Construction Pte Ltd"></div>
+      <div class="fl"><div class="lbl">Description *</div><textarea class="inp" id="d-desc" rows="4" placeholder="Describe work done, what happened, or observations..."></textarea></div>
+      <div class="fl"><div class="lbl">Remarks / Follow-up Action</div><textarea class="inp" id="d-rem" placeholder="Actions taken, recommendations, next steps..."></textarea></div>
       <div class="fl">
-        <div class="lbl">Contractor / Subcontractor *</div>
-        <input class="inp" id="d-cont" placeholder="e.g. ABC Construction Pte Ltd">
-      </div>
-      <div class="fl">
-        <div class="lbl">Description *</div>
-        <textarea class="inp" id="d-desc" rows="4" placeholder="Describe work done, what happened, or observations..."></textarea>
-      </div>
-      <div class="fl">
-        <div class="lbl">Remarks / Follow-up Action</div>
-        <textarea class="inp" id="d-rem" placeholder="Actions taken, recommendations, next steps..."></textarea>
-      </div>
-      <div class="fl">
-        <div class="lbl">Photo Evidence 📷</div>
+        <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="d-file" onchange="App.loadPhoto('d',this)">
         <div class="pa" id="d-pa" onclick="document.getElementById('d-file').click()">
-          <div style="font-size:36px">📷</div>
+          <div style="font-size:36px">&#128247;</div>
           <div class="pa-hint">Tap to take photo or choose from gallery</div>
         </div>
       </div>
       <div class="err" id="d-err"></div>
       <hr class="div">
-      <button class="btn btn-green" id="d-btn" onclick="App.submitDaily()">✅ Submit Daily Report</button>
+      <button class="btn btn-green" id="d-btn" onclick="App.submitDaily()">Submit Daily Report</button>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
     <!-- RECORDS -->
     <div class="screen hidden" id="scr-records">
       <div class="tabs">
-        <button class="tab on"  id="tab-all"   onclick="App.setTab('all')">All</button>
-        <button class="tab"     id="tab-stock" onclick="App.setTab('stock')">📦 Stock</button>
-        <button class="tab"     id="tab-daily" onclick="App.setTab('daily')">📋 Daily</button>
+        <button class="tab on" id="tab-all"   onclick="App.setTab('all')">All</button>
+        <button class="tab"    id="tab-stock" onclick="App.setTab('stock')">Stock</button>
+        <button class="tab"    id="tab-daily" onclick="App.setTab('daily')">Daily</button>
       </div>
       <button class="btn btn-excel" onclick="App.exportExcel()">
-        <span style="font-size:18px">📊</span> Export All to Excel (.xlsx)
+        <span style="font-size:18px">&#128202;</span> Export All to Excel (.xlsx)
       </button>
       <div id="records-list"></div>
     </div>
 
-  </div><!-- /screens -->
-</div><!-- /app -->
-
+  </div>
+</div>
 <div class="toast" id="toast"></div>
-
 <script>
-// ═══════════════════════════════════════════
+// =============================================
 //  PASTE YOUR SUPABASE CREDENTIALS HERE
-// ═══════════════════════════════════════════
+// =============================================
 const SUPABASE_URL = 'https://zpmjcdbqynebhyprqmrf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbWpjZGJxeW5lYmh5cHJxbXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MDMyNTksImV4cCI6MjA4NDM3OTI1OX0.68k7Ni0EfEVzKOa-tp9_d5QQ0Xh2u1scv_TdGwnXMtE';
-// ═══════════════════════════════════════════
+// =============================================
 
-let sb = null;
-function initSB(){
-  try{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY); return true; }
-  catch(e){ return false; }
-}
+let sb=null;
+function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
 
 const STATE={screen:'login',prev:null,user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[]};
 const $=id=>document.getElementById(id);
@@ -427,34 +293,21 @@ const ini=n=>n?n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2):'?';
 const fmtDt=d=>new Date(d).toLocaleString('en-SG',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 const nowStr=()=>fmtDt(new Date());
 
-function toast(msg,dur=2800){
-  const t=$('toast');t.textContent=msg;t.classList.add('on');
-  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),dur);
-}
-function showErr(id,msg){const e=$(id);if(e){e.style.display='block';e.textContent='⚠️ '+msg;}}
+function toast(msg,dur=2800){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),dur);}
+function showErr(id,msg){const e=$(id);if(e){e.style.display='block';e.textContent='Warning: '+msg;}}
 function hideErr(id){const e=$(id);if(e)e.style.display='none';}
 
 const BACK={stock:'home',daily:'home',records:'home',register:'login'};
 const TITLES={login:'CPC Site Reports',register:'Create Account',home:'Dashboard',stock:'Stock Report',daily:'Daily Report',records:'Records'};
 
 function show(scr){
-  const cur=STATE.screen;
-  if(cur===scr)return;
-  STATE.prev=cur;
+  const cur=STATE.screen;if(cur===scr)return;STATE.prev=cur;
   const curEl=$('scr-'+cur);
   if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
   const newEl=$('scr-'+scr);
-  if(newEl){
-    newEl.classList.remove('hidden');
-    newEl.style.transform='translateX(100%)';newEl.style.opacity='0';
-    requestAnimationFrame(()=>{
-      newEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';
-      newEl.style.transform='';newEl.style.opacity='';
-      setTimeout(()=>newEl.style.transition='',300);
-    });
-  }
-  STATE.screen=scr;
-  updateHdr(scr);
+  if(newEl){newEl.classList.remove('hidden');newEl.style.transform='translateX(100%)';newEl.style.opacity='0';
+    requestAnimationFrame(()=>{newEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';newEl.style.transform='';newEl.style.opacity='';setTimeout(()=>newEl.style.transition='',300);});}
+  STATE.screen=scr;updateHdr(scr);
   if(scr==='home')loadHome();
   if(scr==='records')loadRecords();
   if(scr==='stock')initStockForm();
@@ -472,13 +325,11 @@ function updateHdr(scr){
   else av.style.display='none';
 }
 
-// ── Auth ──────────────────────────────────
 async function login(){
   const email=val('l-email'),pass=val('l-pass');
   if(!email||!pass){showErr('l-err','Please fill in all fields');return;}
   hideErr('l-err');
-  const btn=document.querySelector('#scr-login .btn-navy');
-  btn.textContent='Signing in...';btn.disabled=true;
+  const btn=document.querySelector('#scr-login .btn-navy');btn.textContent='Signing in...';btn.disabled=true;
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
   btn.textContent='Sign In';btn.disabled=false;
   if(error){showErr('l-err',error.message);return;}
@@ -490,15 +341,13 @@ async function register(){
   if(!name||!role||!email||!pass){showErr('r-err','All fields are required');return;}
   if(pass.length<6){showErr('r-err','Password must be at least 6 characters');return;}
   hideErr('r-err');
-  const btn=document.querySelector('#scr-register .btn-gold');
-  btn.textContent='Creating...';btn.disabled=true;
+  const btn=document.querySelector('#scr-register .btn-gold');btn.textContent='Creating...';btn.disabled=true;
   const{data,error}=await sb.auth.signUp({email,password:pass});
   btn.textContent='Create Account';btn.disabled=false;
   if(error){showErr('r-err',error.message);return;}
   STATE.user=data.user;
   await sb.from('profiles').insert({id:STATE.user.id,name,role});
-  STATE.profile={name,role};
-  show('home');toast('🎉 Welcome to CPC Reports, '+name+'!');
+  STATE.profile={name,role};show('home');toast('Welcome to CPC Reports, '+name+'!');
 }
 
 async function loadProfile(){
@@ -508,48 +357,36 @@ async function loadProfile(){
 
 async function logout(){
   if(!confirm('Sign out of CPC Reports?'))return;
-  await sb?.auth.signOut();
-  STATE.user=null;STATE.profile=null;show('login');
+  await sb?.auth.signOut();STATE.user=null;STATE.profile=null;show('login');
 }
 
-// ── Home ──────────────────────────────────
 async function loadHome(){
   const p=STATE.profile||{};
-  $('home-ini').textContent=ini(p.name);
-  $('home-name').textContent=p.name||'—';
-  $('home-role').textContent=p.role||'—';
-  $('cnt-stock').textContent='…';$('cnt-daily').textContent='…';
+  $('home-ini').textContent=ini(p.name);$('home-name').textContent=p.name||'-';$('home-role').textContent=p.role||'-';
+  $('cnt-stock').textContent='...';$('cnt-daily').textContent='...';
   const{data}=await sb.from('reports').select('type');
   const all=data||[];
   $('cnt-stock').textContent=all.filter(r=>r.type==='stock').length;
   $('cnt-daily').textContent=all.filter(r=>r.type==='daily').length;
 }
 
-// ── Stock Form ────────────────────────────
 function initStockForm(){
-  STATE.photoFile.s=null;
-  const p=STATE.profile||{};
-  $('stock-ini').textContent=ini(p.name);
-  $('stock-name').textContent=p.name||'—';
-  $('stock-ts').textContent='📅 '+nowStr();
-  ['s-proj','s-from','s-to','s-inst','s-recv','s-items'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  STATE.photoFile.s=null;const p=STATE.profile||{};
+  $('stock-ini').textContent=ini(p.name);$('stock-name').textContent=p.name||'-';$('stock-ts').textContent='Date: '+nowStr();
+  ['s-proj','s-from','s-to','s-inst','s-recv','s-items','s-qty'].forEach(id=>{const e=$(id);if(e)e.value='';});
   hideErr('s-err');resetPhoto('s');
 }
 
-// ── Daily Form ────────────────────────────
 function initDailyForm(){
-  STATE.photoFile.d=null;
-  const p=STATE.profile||{};
-  $('daily-ini').textContent=ini(p.name);
-  $('daily-name').textContent=p.name||'—';
-  $('daily-ts').textContent='📅 '+nowStr();
+  STATE.photoFile.d=null;const p=STATE.profile||{};
+  $('daily-ini').textContent=ini(p.name);$('daily-name').textContent=p.name||'-';$('daily-ts').textContent='Date: '+nowStr();
   ['d-proj','d-cont','d-desc','d-rem'].forEach(id=>{const e=$(id);if(e)e.value='';});
   hideErr('d-err');resetPhoto('d');
 }
 
 function resetPhoto(p){
   const pa=$(p+'-pa');if(!pa)return;
-  pa.innerHTML=`<div style="font-size:36px">📷</div><div class="pa-hint">Tap to take photo or choose from gallery</div>`;
+  pa.innerHTML='<div style="font-size:36px">&#128247;</div><div class="pa-hint">Tap to take photo or choose from gallery</div>';
   pa.onclick=()=>document.getElementById(p+'-file').click();
   const fi=$(p+'-file');if(fi)fi.value='';
 }
@@ -560,7 +397,7 @@ function loadPhoto(prefix,input){
   const r=new FileReader();
   r.onload=e=>{
     const pa=$(prefix+'-pa');
-    pa.innerHTML=`<img src="${e.target.result}"><div class="pa-ov"><span>📷 Tap to change</span></div>`;
+    pa.innerHTML='<img src="'+e.target.result+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file').click();
   };
   r.readAsDataURL(file);
@@ -569,72 +406,59 @@ function loadPhoto(prefix,input){
 async function uploadPhoto(prefix){
   const file=STATE.photoFile[prefix];if(!file)return null;
   const ext=file.name.split('.').pop()||'jpg';
-  const path=`${STATE.user.id}/${Date.now()}_${prefix}.${ext}`;
+  const path=STATE.user.id+'/'+Date.now()+'_'+prefix+'.'+ext;
   const{error}=await sb.storage.from('report-photos').upload(path,file,{upsert:true});
-  if(error){toast('⚠️ Photo upload failed — report saved without photo');return null;}
+  if(error){toast('Photo upload failed - report saved without photo');return null;}
   return sb.storage.from('report-photos').getPublicUrl(path).data.publicUrl;
 }
 
-// ── Submit Stock ──────────────────────────
 async function submitStock(){
-  const proj=val('s-proj'),from=val('s-from'),to=val('s-to'),inst=val('s-inst'),recv=val('s-recv');
-  if(!proj||!from||!to||!inst||!recv){showErr('s-err','Please fill all required fields (*)');return;}
+  const proj=val('s-proj'),from=val('s-from'),to=val('s-to'),inst=val('s-inst');
+  if(!proj||!from||!to||!inst){showErr('s-err','Please fill all required fields (*)');return;}
   hideErr('s-err');
-  const btn=$('s-btn');btn.textContent='⏳ Saving...';btn.disabled=true;
+  const btn=$('s-btn');btn.textContent='Saving...';btn.disabled=true;
   const photo_url=await uploadPhoto('s');
   const{error}=await sb.from('reports').insert({
     type:'stock',project:proj,submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    photo_url,from_location:from,to_location:to,instructed_by:inst,received_by:recv,items:val('s-items')
+    photo_url,from_location:from,to_location:to,instructed_by:inst,
+    received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')
   });
-  btn.textContent='✅ Submit Stock Report';btn.disabled=false;
+  btn.textContent='Submit Stock Report';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
-  toast('✅ Stock report saved!');show('home');
+  toast('Stock report saved!');show('home');
 }
 
-// ── Submit Daily ──────────────────────────
 async function submitDaily(){
   const proj=val('d-proj'),cont=val('d-cont'),desc=val('d-desc');
   if(!proj||!cont||!desc){showErr('d-err','Fill Project, Contractor and Description (*)');return;}
   hideErr('d-err');
-  const btn=$('d-btn');btn.textContent='⏳ Saving...';btn.disabled=true;
+  const btn=$('d-btn');btn.textContent='Saving...';btn.disabled=true;
   const photo_url=await uploadPhoto('d');
   const{error}=await sb.from('reports').insert({
     type:'daily',project:proj,submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
     photo_url,report_type:val('d-type'),contractor:cont,description:desc,remarks:val('d-rem')
   });
-  btn.textContent='✅ Submit Daily Report';btn.disabled=false;
+  btn.textContent='Submit Daily Report';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
-  toast('✅ Daily report saved!');show('home');
+  toast('Daily report saved!');show('home');
 }
 
-// ── Records ───────────────────────────────
 async function loadRecords(){
   const list=$('records-list');
-  list.innerHTML=`<div class="ld"><div class="spin"></div><span>Loading records...</span></div>`;
+  list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading records...</span></div>';
   let q=sb.from('reports').select('*').order('created_at',{ascending:false});
   if(STATE.tab!=='all')q=q.eq('type',STATE.tab);
   const{data,error}=await q;
   STATE.records=data||[];
-  if(error){list.innerHTML=`<div class="em"><div class="em-ico">⚠️</div><p>${error.message}</p></div>`;return;}
+  if(error){list.innerHTML='<div class="em"><div class="em-ico">Error</div><p>'+error.message+'</p></div>';return;}
   const allC=(await sb.from('reports').select('id')).data?.length||0;
   const sC=(await sb.from('reports').select('id').eq('type','stock')).data?.length||0;
   const dC=(await sb.from('reports').select('id').eq('type','daily')).data?.length||0;
-  $('tab-all').textContent=`All (${allC})`;
-  $('tab-stock').textContent=`📦 (${sC})`;
-  $('tab-daily').textContent=`📋 (${dC})`;
-  if(!STATE.records.length){list.innerHTML=`<div class="em"><div class="em-ico">📂</div><p>No reports found</p></div>`;return;}
-  list.innerHTML=STATE.records.map(r=>`
-    <button class="rc" onclick="App.viewRec('${r.id}')" style="margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <h3 style="padding-right:8px">${r.project}</h3>
-        <span class="tag tag-${r.type==='stock'?'s':'d'}">${r.type==='stock'?'📦 Stock':'📋 Daily'}</span>
-      </div>
-      <div class="rmeta">
-        <span>🕐 ${fmtDt(r.created_at)}</span>
-        <span>👤 ${r.submitted_by_name||'—'}</span>
-        ${r.type==='stock'?`<span style="color:var(--accent)">${r.from_location||''}→${r.to_location||''}</span>`:`<span>${r.report_type||''}</span>`}
-      </div>
-    </button>`).join('');
+  $('tab-all').textContent='All ('+allC+')';
+  $('tab-stock').textContent='Stock ('+sC+')';
+  $('tab-daily').textContent='Daily ('+dC+')';
+  if(!STATE.records.length){list.innerHTML='<div class="em"><div class="em-ico">&#128193;</div><p>No reports found</p></div>';return;}
+  list.innerHTML=STATE.records.map(r=>'<button class="rc" onclick="App.viewRec(\''+r.id+'\')" style="margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h3 style="padding-right:8px">'+r.project+'</h3><span class="tag tag-'+(r.type==='stock'?'s':'d')+'">'+(r.type==='stock'?'Stock':'Daily')+'</span></div><div class="rmeta"><span>'+fmtDt(r.created_at)+'</span><span>'+(r.submitted_by_name||'-')+'</span>'+(r.type==='stock'?'<span>'+( r.from_location||'')+'to'+(r.to_location||'')+'</span>':'<span>'+(r.report_type||'')+'</span>')+'</div></button>').join('');
 }
 
 function setTab(t){
@@ -645,115 +469,60 @@ function setTab(t){
 
 function viewRec(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  const row=(l,v)=>v?`<div class="dr"><span class="dl">${l}</span><span class="dv">${v}</span></div>`:'';
+  const row=(l,v)=>v?'<div class="dr"><span class="dl">'+l+'</span><span class="dv">'+v+'</span></div>':'';
   let rows='';
-  if(r.type==='stock'){
-    rows=[row('Project',r.project),row('From',r.from_location),row('To',r.to_location),
-      row('Instructed By',r.instructed_by),row('Received By',r.received_by),
-      row('Items',r.items),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');
-  }else{
-    rows=[row('Project',r.project),row('Report Type',r.report_type),row('Contractor',r.contractor),
-      row('Description',r.description),row('Remarks',r.remarks),
-      row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');
-  }
+  if(r.type==='stock'){rows=[row('Project',r.project),row('From',r.from_location),row('To',r.to_location),row('Instructed By',r.instructed_by),row('Received By',r.received_by),row('Items',r.items),row('Qty / Unit',r.qty),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
+  else{rows=[row('Project',r.project),row('Report Type',r.report_type),row('Contractor',r.contractor),row('Description',r.description),row('Remarks',r.remarks),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
   const canDel=r.submitted_by===STATE.user?.id;
-  const m=document.createElement('div');m.className='modal-bg';m.id='mod';
-  m.style.cssText='position:fixed;inset:0';
-  m.innerHTML=`<div class="modal" style="position:relative">
-    <button class="mc" onclick="document.getElementById('mod').remove()">✕</button>
-    <h3>${r.type==='stock'?'📦 Stock Report':'📋 Daily Report'}</h3>
-    ${r.photo_url
-      ?`<img src="${r.photo_url}" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;margin-bottom:14px;display:block">`
-      :`<div style="background:#f5f8fc;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:14px">No photo attached</div>`}
-    ${rows}
-    <div style="display:flex;gap:8px;margin-top:16px">
-      ${canDel?`<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec('${r.id}')">🗑️ Delete</button>`:''}
-      <button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById('mod').remove()">Close</button>
-    </div>
-  </div>`;
+  const m=document.createElement('div');m.className='modal-bg';m.id='mod';m.style.cssText='position:fixed;inset:0';
+  m.innerHTML='<div class="modal" style="position:relative"><button class="mc" onclick="document.getElementById(\'mod\').remove()">X</button><h3>'+(r.type==='stock'?'Stock Report':'Daily Report')+'</h3>'+(r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;margin-bottom:14px;display:block">':'<div style="background:#f5f8fc;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:14px">No photo attached</div>')+rows+'<div style="display:flex;gap:8px;margin-top:16px">'+(canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+'<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
   document.body.appendChild(m);
 }
 
 async function deleteRec(id){
   if(!confirm('Delete this report permanently?'))return;
   await sb.from('reports').delete().eq('id',id);
-  document.getElementById('mod')?.remove();
-  toast('🗑️ Report deleted');loadRecords();
+  document.getElementById('mod')?.remove();toast('Report deleted');loadRecords();
 }
 
-// ── Excel Export ──────────────────────────
 async function exportExcel(){
-  toast('⏳ Preparing Excel file...',4000);
+  toast('Preparing Excel file...',4000);
   const[{data:stocks},{data:dailies}]=await Promise.all([
     sb.from('reports').select('*').eq('type','stock').order('created_at',{ascending:false}),
     sb.from('reports').select('*').eq('type','daily').order('created_at',{ascending:false})
   ]);
   const wb=XLSX.utils.book_new();
-
-  // Stock sheet
-  const sH=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items / Description','Submitted By','Photo URL'];
-  const sR=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.submitted_by_name||'',r.photo_url||'']);
+  const sH=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items / Description','Qty / Unit','Submitted By','Photo URL'];
+  const sR=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.qty||'',r.submitted_by_name||'',r.photo_url||'']);
   const ws1=XLSX.utils.aoa_to_sheet([sH,...sR]);
-  ws1['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:18},{wch:20},{wch:20},{wch:36},{wch:20},{wch:40}];
+  ws1['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:18},{wch:20},{wch:20},{wch:36},{wch:12},{wch:20},{wch:40}];
   ws1['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws1,'Stock Reports');
-
-  // Daily sheet
   const dH=['No.','Date & Time','Project / Site','Report Type','Contractor','Description','Remarks','Submitted By','Photo URL'];
   const dR=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.submitted_by_name||'',r.photo_url||'']);
   const ws2=XLSX.utils.aoa_to_sheet([dH,...dR]);
   ws2['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:26},{wch:40},{wch:36},{wch:20},{wch:40}];
   ws2['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws2,'Daily Reports');
-
-  // Summary sheet
   const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
-  const ws3=XLSX.utils.aoa_to_sheet([
-    ['CPC SITE REPORT SUMMARY',''],
-    ['Exported By',STATE.profile?.name||''],
-    ['Role',STATE.profile?.role||''],
-    ['Export Date',today],['',''],
-    ['Report Type','Total'],
-    ['Stock Reports',(stocks||[]).length],
-    ['Daily / Incident Reports',(dailies||[]).length],
-    ['GRAND TOTAL',(stocks||[]).length+(dailies||[]).length]
-  ]);
+  const ws3=XLSX.utils.aoa_to_sheet([['CPC SITE REPORT SUMMARY',''],['Exported By',STATE.profile?.name||''],['Role',STATE.profile?.role||''],['Export Date',today],['',''],['Report Type','Total'],['Stock Reports',(stocks||[]).length],['Daily / Incident Reports',(dailies||[]).length],['GRAND TOTAL',(stocks||[]).length+(dailies||[]).length]]);
   ws3['!cols']=[{wch:30},{wch:20}];
   XLSX.utils.book_append_sheet(wb,ws3,'Summary');
-
-  XLSX.writeFile(wb,`CPC_SiteReports_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast('✅ Excel downloaded!');
+  XLSX.writeFile(wb,'CPC_SiteReports_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Excel downloaded!');
 }
 
-// ── PWA Install ───────────────────────────
 let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();deferredPrompt=e;
-  $('install-banner').style.display='flex';
-});
-$('install-btn').addEventListener('click',async()=>{
-  if(!deferredPrompt)return;
-  deferredPrompt.prompt();
-  const{outcome}=await deferredPrompt.userChoice;
-  if(outcome==='accepted')toast('✅ CPC Reports installed!');
-  deferredPrompt=null;$('install-banner').style.display='none';
-});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('install-banner').style.display='flex';});
+$('install-btn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted')toast('CPC Reports installed!');deferredPrompt=null;$('install-banner').style.display='none';});
 function dismissInstall(){$('install-banner').style.display='none';}
-window.addEventListener('appinstalled',()=>{$('install-banner').style.display='none';toast('✅ App installed!');});
+window.addEventListener('appinstalled',()=>{$('install-banner').style.display='none';toast('App installed!');});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
-// ── Service Worker ────────────────────────
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
-
-// ── Boot ──────────────────────────────────
 const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,viewRec,deleteRec,exportExcel};
 
 (async()=>{
-  if(!initSB()){
-    alert('Supabase credentials missing! Open index.html and fill in SUPABASE_URL and SUPABASE_KEY.');
-    return;
-  }
+  if(!initSB()){alert('Supabase credentials missing!\n\nOpen index.html and fill in SUPABASE_URL and SUPABASE_KEY.');return;}
   const{data:{session}}=await sb.auth.getSession();
   if(session){STATE.user=session.user;await loadProfile();show('home');}
   else show('login');
