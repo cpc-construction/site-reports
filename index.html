@@ -51,14 +51,25 @@ textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-excel{background:#1d6f42;color:#fff;box-shadow:0 2px 8px rgba(29,111,66,.3)}
-.btn-excel:active{background:#155232}
 .btn-sm{width:auto;padding:9px 16px;font-size:13px}
-.pa{background:#f5f8fc;border:2px dashed var(--border2);border-radius:var(--rsm);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
-.pa:active{border-color:var(--accent)}
+/* ── Photo Area ── */
+.pa{
+  background:#f5f8fc;border:2px dashed var(--border2);border-radius:var(--rsm);
+  min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s,background .2s;
+}
+.pa.drag-over{border-color:var(--accent);background:#eff6ff;}
 .pa img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pa-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
 .pa-ov span{color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:20px}
-.pa-hint{font-size:12px;color:var(--hint);text-align:center;padding:0 16px}
+.pa-hint{font-size:12px;color:var(--hint);text-align:center;padding:0 12px;line-height:1.6}
+.pa-icons{display:flex;gap:14px;margin-bottom:4px}
+.pa-icons span{font-size:22px}
+.pa-btns{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+.pa-btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:transform .1s}
+.pa-btn:active{transform:scale(.96)}
+.pa-btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+/* Stats */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .st{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;text-align:center}
 .stn{font-size:30px;font-weight:800;line-height:1}
@@ -134,7 +145,7 @@ input[type=file]{display:none}
         <p>Sign in to continue</p>
       </div>
       <div class="fl"><div class="lbl">Email</div><input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
-      <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="current-password"></div>
+      <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <div class="err" id="l-err"></div>
       <button class="btn btn-navy" onclick="App.login()">Sign In</button>
       <button class="btn btn-ghost" onclick="App.show('register')">Create New Account</button>
@@ -183,7 +194,7 @@ input[type=file]{display:none}
       </button>
       <button class="ac" onclick="App.show('daily')">
         <div class="ac-ico" style="background:#fef3c7">&#128203;</div>
-        <div><h2>Daily / Incident Report</h2><p>Work progress, site incidents, contractor activities with photos</p></div>
+        <div><h2>Daily / Incident Report</h2><p>Work progress, incidents, contractor activities with photos</p></div>
       </button>
       <button class="ac" onclick="App.show('records')" style="padding:14px 16px">
         <div class="ac-ico" style="background:#f0fdf4;font-size:22px">&#128193;</div>
@@ -215,9 +226,14 @@ input[type=file]{display:none}
       <div class="fl">
         <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="s-file" onchange="App.loadPhoto('s',this)">
-        <div class="pa" id="s-pa" onclick="document.getElementById('s-file').click()">
-          <div style="font-size:36px">&#128247;</div>
-          <div class="pa-hint">Tap to take photo or choose from gallery</div>
+        <input type="file" accept="image/*" id="s-file-gallery" onchange="App.loadPhoto('s',this)">
+        <div class="pa" id="s-pa">
+          <div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div>
+          <div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div>
+          <div class="pa-btns">
+            <button class="pa-btn" onclick="document.getElementById('s-file').click()">&#128247; Camera</button>
+            <button class="pa-btn ghost" onclick="document.getElementById('s-file-gallery').click()">&#128440; Gallery</button>
+          </div>
         </div>
       </div>
       <div class="err" id="s-err"></div>
@@ -248,9 +264,14 @@ input[type=file]{display:none}
       <div class="fl">
         <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="d-file" onchange="App.loadPhoto('d',this)">
-        <div class="pa" id="d-pa" onclick="document.getElementById('d-file').click()">
-          <div style="font-size:36px">&#128247;</div>
-          <div class="pa-hint">Tap to take photo or choose from gallery</div>
+        <input type="file" accept="image/*" id="d-file-gallery" onchange="App.loadPhoto('d',this)">
+        <div class="pa" id="d-pa">
+          <div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div>
+          <div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div>
+          <div class="pa-btns">
+            <button class="pa-btn" onclick="document.getElementById('d-file').click()">&#128247; Camera</button>
+            <button class="pa-btn ghost" onclick="document.getElementById('d-file-gallery').click()">&#128440; Gallery</button>
+          </div>
         </div>
       </div>
       <div class="err" id="d-err"></div>
@@ -279,8 +300,8 @@ input[type=file]{display:none}
 // =============================================
 //  PASTE YOUR SUPABASE CREDENTIALS HERE
 // =============================================
-const SUPABASE_URL = 'https://zpmjcdbqynebhyprqmrf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbWpjZGJxeW5lYmh5cHJxbXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MDMyNTksImV4cCI6MjA4NDM3OTI1OX0.68k7Ni0EfEVzKOa-tp9_d5QQ0Xh2u1scv_TdGwnXMtE';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 // =============================================
 
 let sb=null;
@@ -313,9 +334,7 @@ function show(scr){
   if(scr==='stock')initStockForm();
   if(scr==='daily')initDailyForm();
 }
-
 function goBack(){show(BACK[STATE.screen]||'home');}
-
 function updateHdr(scr){
   $('hdr-title').textContent=TITLES[scr]||'CPC Reports';
   $('hdr-back').style.display=BACK[scr]?'block':'none';
@@ -335,7 +354,6 @@ async function login(){
   if(error){showErr('l-err',error.message);return;}
   STATE.user=data.user;await loadProfile();show('home');
 }
-
 async function register(){
   const name=val('r-name'),role=val('r-role'),email=val('r-email'),pass=val('r-pass');
   if(!name||!role||!email||!pass){showErr('r-err','All fields are required');return;}
@@ -349,17 +367,14 @@ async function register(){
   await sb.from('profiles').insert({id:STATE.user.id,name,role});
   STATE.profile={name,role};show('home');toast('Welcome to CPC Reports, '+name+'!');
 }
-
 async function loadProfile(){
   const{data}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
   STATE.profile=data;
 }
-
 async function logout(){
   if(!confirm('Sign out of CPC Reports?'))return;
   await sb?.auth.signOut();STATE.user=null;STATE.profile=null;show('login');
 }
-
 async function loadHome(){
   const p=STATE.profile||{};
   $('home-ini').textContent=ini(p.name);$('home-name').textContent=p.name||'-';$('home-role').textContent=p.role||'-';
@@ -370,42 +385,74 @@ async function loadHome(){
   $('cnt-daily').textContent=all.filter(r=>r.type==='daily').length;
 }
 
+// ── Photo handling ────────────────────────────────────────
 function initStockForm(){
   STATE.photoFile.s=null;const p=STATE.profile||{};
   $('stock-ini').textContent=ini(p.name);$('stock-name').textContent=p.name||'-';$('stock-ts').textContent='Date: '+nowStr();
   ['s-proj','s-from','s-to','s-inst','s-recv','s-items','s-qty'].forEach(id=>{const e=$(id);if(e)e.value='';});
-  hideErr('s-err');resetPhoto('s');
+  hideErr('s-err');resetPhoto('s');setupPhotoZone('s');
 }
-
 function initDailyForm(){
   STATE.photoFile.d=null;const p=STATE.profile||{};
   $('daily-ini').textContent=ini(p.name);$('daily-name').textContent=p.name||'-';$('daily-ts').textContent='Date: '+nowStr();
   ['d-proj','d-cont','d-desc','d-rem'].forEach(id=>{const e=$(id);if(e)e.value='';});
-  hideErr('d-err');resetPhoto('d');
+  hideErr('d-err');resetPhoto('d');setupPhotoZone('d');
 }
 
 function resetPhoto(p){
   const pa=$(p+'-pa');if(!pa)return;
-  pa.innerHTML='<div style="font-size:36px">&#128247;</div><div class="pa-hint">Tap to take photo or choose from gallery</div>';
-  pa.onclick=()=>document.getElementById(p+'-file').click();
-  const fi=$(p+'-file');if(fi)fi.value='';
+  pa.innerHTML='<div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div><div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div><div class="pa-btns"><button class="pa-btn" onclick="document.getElementById(\''+p+'-file\').click()">&#128247; Camera</button><button class="pa-btn ghost" onclick="document.getElementById(\''+p+'-file-gallery\').click()">&#128440; Gallery</button></div>';
 }
 
-function loadPhoto(prefix,input){
-  const file=input.files[0];if(!file)return;
+function setPhotoFromFile(prefix, file){
+  if(!file||!file.type.startsWith('image/'))return;
   STATE.photoFile[prefix]=file;
   const r=new FileReader();
   r.onload=e=>{
     const pa=$(prefix+'-pa');
     pa.innerHTML='<img src="'+e.target.result+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
-    pa.onclick=()=>document.getElementById(prefix+'-file').click();
+    pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   };
   r.readAsDataURL(file);
 }
 
+function loadPhoto(prefix,input){
+  const file=input.files[0];
+  setPhotoFromFile(prefix,file);
+}
+
+function setupPhotoZone(prefix){
+  const pa=$(prefix+'-pa');if(!pa)return;
+
+  // Drag & drop
+  pa.addEventListener('dragover',e=>{e.preventDefault();pa.classList.add('drag-over');});
+  pa.addEventListener('dragleave',()=>pa.classList.remove('drag-over'));
+  pa.addEventListener('drop',e=>{
+    e.preventDefault();pa.classList.remove('drag-over');
+    const file=e.dataTransfer.files[0];
+    setPhotoFromFile(prefix,file);
+  });
+
+  // Paste anywhere on screen when this form is active
+  pa._pasteHandler=e=>{
+    if(STATE.screen!==prefix&&STATE.screen!==('stock'===prefix?'stock':'daily'))return;
+    const items=e.clipboardData?.items;
+    if(!items)return;
+    for(const item of items){
+      if(item.type.startsWith('image/')){
+        const file=item.getAsFile();
+        setPhotoFromFile(prefix,file);
+        toast('Photo pasted!');
+        break;
+      }
+    }
+  };
+  document.addEventListener('paste',pa._pasteHandler);
+}
+
 async function uploadPhoto(prefix){
   const file=STATE.photoFile[prefix];if(!file)return null;
-  const ext=file.name.split('.').pop()||'jpg';
+  const ext=(file.name||'photo.jpg').split('.').pop()||'jpg';
   const path=STATE.user.id+'/'+Date.now()+'_'+prefix+'.'+ext;
   const{error}=await sb.storage.from('report-photos').upload(path,file,{upsert:true});
   if(error){toast('Photo upload failed - report saved without photo');return null;}
@@ -427,7 +474,6 @@ async function submitStock(){
   if(error){showErr('s-err',error.message);return;}
   toast('Stock report saved!');show('home');
 }
-
 async function submitDaily(){
   const proj=val('d-proj'),cont=val('d-cont'),desc=val('d-desc');
   if(!proj||!cont||!desc){showErr('d-err','Fill Project, Contractor and Description (*)');return;}
@@ -450,7 +496,7 @@ async function loadRecords(){
   if(STATE.tab!=='all')q=q.eq('type',STATE.tab);
   const{data,error}=await q;
   STATE.records=data||[];
-  if(error){list.innerHTML='<div class="em"><div class="em-ico">Error</div><p>'+error.message+'</p></div>';return;}
+  if(error){list.innerHTML='<div class="em"><div class="em-ico">&#9888;</div><p>'+error.message+'</p></div>';return;}
   const allC=(await sb.from('reports').select('id')).data?.length||0;
   const sC=(await sb.from('reports').select('id').eq('type','stock')).data?.length||0;
   const dC=(await sb.from('reports').select('id').eq('type','daily')).data?.length||0;
@@ -458,15 +504,13 @@ async function loadRecords(){
   $('tab-stock').textContent='Stock ('+sC+')';
   $('tab-daily').textContent='Daily ('+dC+')';
   if(!STATE.records.length){list.innerHTML='<div class="em"><div class="em-ico">&#128193;</div><p>No reports found</p></div>';return;}
-  list.innerHTML=STATE.records.map(r=>'<button class="rc" onclick="App.viewRec(\''+r.id+'\')" style="margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h3 style="padding-right:8px">'+r.project+'</h3><span class="tag tag-'+(r.type==='stock'?'s':'d')+'">'+(r.type==='stock'?'Stock':'Daily')+'</span></div><div class="rmeta"><span>'+fmtDt(r.created_at)+'</span><span>'+(r.submitted_by_name||'-')+'</span>'+(r.type==='stock'?'<span>'+( r.from_location||'')+'to'+(r.to_location||'')+'</span>':'<span>'+(r.report_type||'')+'</span>')+'</div></button>').join('');
+  list.innerHTML=STATE.records.map(r=>'<button class="rc" onclick="App.viewRec(\''+r.id+'\')" style="margin-bottom:10px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><h3 style="padding-right:8px">'+r.project+'</h3><span class="tag tag-'+(r.type==='stock'?'s':'d')+'">'+(r.type==='stock'?'Stock':'Daily')+'</span></div><div class="rmeta"><span>'+fmtDt(r.created_at)+'</span><span>'+(r.submitted_by_name||'-')+'</span>'+(r.type==='stock'?'<span>'+(r.from_location||'')+' to '+(r.to_location||'')+'</span>':'<span>'+(r.report_type||'')+'</span>')+'</div></button>').join('');
 }
-
 function setTab(t){
   STATE.tab=t;
   ['all','stock','daily'].forEach(x=>$('tab-'+x)?.classList.toggle('on',x===t));
   loadRecords();
 }
-
 function viewRec(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   const row=(l,v)=>v?'<div class="dr"><span class="dl">'+l+'</span><span class="dv">'+v+'</span></div>':'';
@@ -475,16 +519,14 @@ function viewRec(id){
   else{rows=[row('Project',r.project),row('Report Type',r.report_type),row('Contractor',r.contractor),row('Description',r.description),row('Remarks',r.remarks),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
   const canDel=r.submitted_by===STATE.user?.id;
   const m=document.createElement('div');m.className='modal-bg';m.id='mod';m.style.cssText='position:fixed;inset:0';
-  m.innerHTML='<div class="modal" style="position:relative"><button class="mc" onclick="document.getElementById(\'mod\').remove()">X</button><h3>'+(r.type==='stock'?'Stock Report':'Daily Report')+'</h3>'+(r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;margin-bottom:14px;display:block">':'<div style="background:#f5f8fc;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:14px">No photo attached</div>')+rows+'<div style="display:flex;gap:8px;margin-top:16px">'+(canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+'<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
+  m.innerHTML='<div class="modal" style="position:relative"><button class="mc" onclick="document.getElementById(\'mod\').remove()">&#x2715;</button><h3>'+(r.type==='stock'?'Stock Report':'Daily Report')+'</h3>'+(r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;margin-bottom:14px;display:block">':'<div style="background:#f5f8fc;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:14px">No photo attached</div>')+rows+'<div style="display:flex;gap:8px;margin-top:16px">'+(canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+'<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
   document.body.appendChild(m);
 }
-
 async function deleteRec(id){
   if(!confirm('Delete this report permanently?'))return;
   await sb.from('reports').delete().eq('id',id);
   document.getElementById('mod')?.remove();toast('Report deleted');loadRecords();
 }
-
 async function exportExcel(){
   toast('Preparing Excel file...',4000);
   const[{data:stocks},{data:dailies}]=await Promise.all([
