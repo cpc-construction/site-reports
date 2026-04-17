@@ -244,20 +244,20 @@ input[type=file]{display:none}
           <div class="lbl">From *</div>
           <div class="combo">
             <select class="inp" id="s-from-sel" onchange="App.onLocChange('s-from')">
-              <option value="">Select location...</option>
+              <option value="">Select project / site...</option>
               <option value="__other__">+ Other (type below)</option>
             </select>
-            <input class="inp combo-custom" id="s-from-txt" placeholder="Type location">
+            <input class="inp combo-custom" id="s-from-txt" placeholder="e.g. Supplier warehouse, Client office...">
           </div>
         </div>
         <div class="fl">
           <div class="lbl">To *</div>
           <div class="combo">
             <select class="inp" id="s-to-sel" onchange="App.onLocChange('s-to')">
-              <option value="">Select location...</option>
+              <option value="">Select project / site...</option>
               <option value="__other__">+ Other (type below)</option>
             </select>
-            <input class="inp combo-custom" id="s-to-txt" placeholder="Type location">
+            <input class="inp combo-custom" id="s-to-txt" placeholder="e.g. Supplier warehouse, Client office...">
           </div>
         </div>
       </div>
@@ -481,12 +481,8 @@ async function loadHome(){
 
 // ── Projects & Locations ──────────────────────────────────
 async function loadProjectsData(){
-  const[{data:projs},{data:locs}]=await Promise.all([
-    sb.from('projects').select('*').eq('active',true).order('name'),
-    sb.from('locations').select('*').order('name')
-  ]);
+  const{data:projs}=await sb.from('projects').select('*').eq('active',true).order('name');
   STATE.projects=projs||[];
-  STATE.locations=locs||[];
 }
 function populateProjSelect(prefix){
   const sel=$(prefix+'-proj-sel');if(!sel)return;
@@ -497,12 +493,13 @@ function populateProjSelect(prefix){
   if(cur)sel.value=cur;
 }
 function populateLocSelects(){
+  // From/To uses the PROJECTS list (stock moves between project sites)
   ['s-from-sel','s-to-sel'].forEach(id=>{
     const sel=$(id);if(!sel)return;
     const cur=sel.value;
-    sel.innerHTML='<option value="">Select location...</option>'+
-      STATE.locations.map(l=>'<option value="'+l.name+'">'+l.name+'</option>').join('')+
-      '<option value="__other__">+ Other (type below)</option>';
+    sel.innerHTML='<option value="">Select project / site...</option>'+
+      STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('')+
+      '<option value="__other__">+ Other (type manually)</option>';
     if(cur)sel.value=cur;
   });
 }
@@ -689,9 +686,7 @@ async function submitStock(){
   btn.textContent='&#10003; Submit';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
   // Save new location if custom
-  const fromSel=$('s-from-sel'),toSel=$('s-to-sel');
-  if(fromSel.value==='__other__'&&val('s-from-txt'))await sb.from('locations').insert({name:val('s-from-txt')}).onConflict('name').ignore();
-  if(toSel.value==='__other__'&&val('s-to-txt'))await sb.from('locations').insert({name:val('s-to-txt')}).onConflict('name').ignore();
+
   toast('Stock report saved!');show('home');
 }
 
