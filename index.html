@@ -14,6 +14,7 @@
 <link rel="icon" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--navy:#0f2744;--navy2:#1b3d5f;--gold:#b8973a;--gold2:#9a7c2e;--accent:#1d6fa8;--green:#0a7c4e;--green2:#086040;--danger:#c0392b;--bg:#eef1f7;--card:#fff;--border:#d5dce8;--border2:#c2cbda;--text:#0d1b2a;--muted:#5a6a7e;--hint:#8fa0b4;--tag-s-bg:#dbeafe;--tag-s-c:#1e3a8a;--tag-d-bg:#fef3c7;--tag-d-c:#78350f;--radius:14px;--rsm:9px;--shadow:0 2px 12px rgba(15,39,68,.10);--shadow2:0 4px 20px rgba(15,39,68,.18)}
@@ -30,7 +31,7 @@ html,body{height:100%;background:var(--bg);font-family:'Segoe UI',system-ui,-app
 .screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
 .screen.slide-left{transform:translateX(-40%);opacity:0;pointer-events:none}
 .ac{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:transform .15s,box-shadow .15s;border:none;width:100%;text-align:left}
-.ac:active{transform:scale(.97);box-shadow:var(--shadow2)}
+.ac:active{transform:scale(.97)}
 .ac-ico{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
 .ac h2{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
 .ac p{font-size:12px;color:var(--muted);line-height:1.45}
@@ -41,24 +42,24 @@ html,body{height:100%;background:var(--bg);font-family:'Segoe UI',system-ui,-app
 textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .r-items{display:grid;grid-template-columns:2fr 1fr;gap:11px;align-items:start}
-.btn{width:100%;padding:14px;border-radius:var(--rsm);font-size:15px;font-weight:700;border:none;cursor:pointer;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn{width:100%;padding:13px;border-radius:var(--rsm);font-size:14px;font-weight:700;border:none;cursor:pointer;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:7px}
 .btn:active{transform:scale(.97)}
 .btn-navy{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(15,39,68,.25)}
-.btn-gold{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(184,151,58,.35)}
+.btn-gold{background:var(--gold);color:#fff;}
 .btn-gold:active{background:var(--gold2)}
-.btn-green{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(10,124,78,.3)}
+.btn-green{background:var(--green);color:#fff;}
 .btn-green:active{background:var(--green2)}
 .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
 .btn-danger{background:var(--danger);color:#fff}
-.btn-excel{background:#1d6f42;color:#fff;box-shadow:0 2px 8px rgba(29,111,66,.3)}
-.btn-sm{width:auto;padding:9px 16px;font-size:13px}
-/* ── Photo Area ── */
-.pa{
-  background:#f5f8fc;border:2px dashed var(--border2);border-radius:var(--rsm);
-  min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s,background .2s;
-}
-.pa.drag-over{border-color:var(--accent);background:#eff6ff;}
+.btn-excel{background:#1d6f42;color:#fff;}
+.btn-pdf{background:#c0392b;color:#fff;}
+.btn-sm{width:auto;padding:8px 14px;font-size:13px}
+/* Export grid */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.export-section-title{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:-4px}
+/* Photo area */
+.pa{background:#f5f8fc;border:2px dashed var(--border2);border-radius:var(--rsm);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s,background .2s}
+.pa.drag-over{border-color:var(--accent);background:#eff6ff}
 .pa img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pa-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
 .pa-ov span{color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:20px}
@@ -66,8 +67,7 @@ textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .pa-icons{display:flex;gap:14px;margin-bottom:4px}
 .pa-icons span{font-size:22px}
 .pa-btns{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;justify-content:center}
-.pa-btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:transform .1s}
-.pa-btn:active{transform:scale(.96)}
+.pa-btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer}
 .pa-btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
 /* Stats */
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:11px}
@@ -79,7 +79,7 @@ textarea.inp{resize:none;min-height:84px;line-height:1.5}
 .tag-d{background:var(--tag-d-bg);color:var(--tag-d-c)}
 .tabs{display:flex;background:var(--card);border-radius:var(--rsm);padding:3px;gap:3px;box-shadow:var(--shadow)}
 .tab{flex:1;padding:8px 4px;border:none;background:transparent;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s}
-.tab.on{background:var(--navy);color:#fff;box-shadow:0 1px 4px rgba(15,39,68,.3)}
+.tab.on{background:var(--navy);color:#fff}
 .rc{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;cursor:pointer;transition:transform .12s;border:none;width:100%;text-align:left}
 .rc:active{transform:scale(.98)}
 .rc h3{font-size:14px;font-weight:700;margin-bottom:6px}
@@ -114,7 +114,7 @@ hr.div{border:none;border-top:1.5px solid var(--border);margin:2px 0}
 .install-banner img{width:32px;height:32px;border-radius:7px;background:#fff;padding:2px;object-fit:contain}
 .install-banner .ib-text{flex:1;line-height:1.4}
 .install-banner .ib-text b{display:block;font-size:13px}
-.install-banner .ib-install{background:var(--gold);border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.install-banner .ib-install{background:var(--gold);border:none;color:#fff;padding:7px 13px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
 .install-banner .ib-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;padding:0 2px;flex-shrink:0}
 input[type=file]{display:none}
 </style>
@@ -132,7 +132,7 @@ input[type=file]{display:none}
       <button class="hdr-back" id="hdr-back" onclick="App.goBack()">&#8249;</button>
       <img class="hdr-logo" src="icon-192.png" alt="CPC" id="hdr-logo">
       <h1 id="hdr-title">CPC Site Reports</h1>
-      <div class="hdr-av" id="hdr-av" onclick="App.logout()" title="Tap to sign out">--</div>
+      <div class="hdr-av" id="hdr-av" onclick="App.logout()" title="Sign out">--</div>
     </div>
   </div>
   <div class="screens">
@@ -141,8 +141,7 @@ input[type=file]{display:none}
     <div class="screen login-wrap" id="scr-login">
       <div class="logo">
         <img class="logo-img" src="icon-512.png" alt="CPC Logo">
-        <h2>CPC Site Reports</h2>
-        <p>Sign in to continue</p>
+        <h2>CPC Site Reports</h2><p>Sign in to continue</p>
       </div>
       <div class="fl"><div class="lbl">Email</div><input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
       <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
@@ -155,8 +154,7 @@ input[type=file]{display:none}
     <div class="screen login-wrap hidden" id="scr-register">
       <div class="logo">
         <img class="logo-img" src="icon-512.png" alt="CPC Logo">
-        <h2>Create Account</h2>
-        <p>Register to use CPC Site Reports</p>
+        <h2>Create Account</h2><p>Register to use CPC Site Reports</p>
       </div>
       <div class="fl"><div class="lbl">Full Name</div><input class="inp" id="r-name" placeholder="e.g. Ahmad Bin Ali" autocomplete="name"></div>
       <div class="fl"><div class="lbl">Role / Position</div>
@@ -198,7 +196,7 @@ input[type=file]{display:none}
       </button>
       <button class="ac" onclick="App.show('records')" style="padding:14px 16px">
         <div class="ac-ico" style="background:#f0fdf4;font-size:22px">&#128193;</div>
-        <div><h2>View &amp; Export Records</h2><p>Browse all reports - download as Excel (.xlsx)</p></div>
+        <div><h2>View &amp; Export Records</h2><p>Excel &amp; PDF with embedded photos</p></div>
       </button>
       <button class="btn btn-ghost" onclick="App.logout()" style="margin-top:4px">Sign Out</button>
     </div>
@@ -218,7 +216,7 @@ input[type=file]{display:none}
         <div class="fl"><div class="lbl">To *</div><input class="inp" id="s-to" placeholder="Level 3 Store"></div>
       </div>
       <div class="fl"><div class="lbl">Instructed By *</div><input class="inp" id="s-inst" placeholder="Name of person who instructed"></div>
-      <div class="fl"><div class="lbl">Received By</div><input class="inp" id="s-recv" placeholder="Name of person who received (optional)"></div>
+      <div class="fl"><div class="lbl">Received By</div><input class="inp" id="s-recv" placeholder="Optional"></div>
       <div class="r-items">
         <div class="fl"><div class="lbl">Items / Description</div><textarea class="inp" id="s-items" placeholder="Item name, description..."></textarea></div>
         <div class="fl"><div class="lbl">Qty / Unit</div><input class="inp" id="s-qty" placeholder="e.g. 10 pcs"></div>
@@ -287,27 +285,46 @@ input[type=file]{display:none}
         <button class="tab"    id="tab-stock" onclick="App.setTab('stock')">Stock</button>
         <button class="tab"    id="tab-daily" onclick="App.setTab('daily')">Daily</button>
       </div>
-      <button class="btn btn-excel" onclick="App.exportExcel()">
-        <span style="font-size:18px">&#128202;</span> Export All to Excel (.xlsx)
-      </button>
+
+      <!-- Export Section -->
+      <div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:13px;font-weight:800;color:var(--navy)">&#128196; Export Reports</div>
+
+        <div class="export-section-title">&#128230; Stock Reports</div>
+        <div class="export-grid">
+          <button class="btn btn-excel" onclick="App.exportStockExcel()"><span>&#128202;</span> Excel</button>
+          <button class="btn btn-pdf"   onclick="App.exportStockPDF()"><span>&#128196;</span> PDF</button>
+        </div>
+
+        <div class="export-section-title" style="margin-top:4px">&#128203; Daily Reports</div>
+        <div class="export-grid">
+          <button class="btn btn-excel" onclick="App.exportDailyExcel()"><span>&#128202;</span> Excel</button>
+          <button class="btn btn-pdf"   onclick="App.exportDailyPDF()"><span>&#128196;</span> PDF</button>
+        </div>
+
+        <div class="export-section-title" style="margin-top:4px">&#128221; Summary</div>
+        <button class="btn btn-excel" onclick="App.exportSummaryExcel()"><span>&#128202;</span> Summary Excel (Both)</button>
+      </div>
+
       <div id="records-list"></div>
     </div>
 
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
 <script>
 // =============================================
 //  PASTE YOUR SUPABASE CREDENTIALS HERE
 // =============================================
-const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+const SUPABASE_URL = 'https://zpmjcdbqynebhyprqmrf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbWpjZGJxeW5lYmh5cHJxbXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MDMyNTksImV4cCI6MjA4NDM3OTI1OX0.68k7Ni0EfEVzKOa-tp9_d5QQ0Xh2u1scv_TdGwnXMtE';
 // =============================================
 
 let sb=null;
 function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
 
-const STATE={screen:'login',prev:null,user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[]};
+const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[]};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value.trim():''};
 const ini=n=>n?n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2):'?';
@@ -322,7 +339,7 @@ const BACK={stock:'home',daily:'home',records:'home',register:'login'};
 const TITLES={login:'CPC Site Reports',register:'Create Account',home:'Dashboard',stock:'Stock Report',daily:'Daily Report',records:'Records'};
 
 function show(scr){
-  const cur=STATE.screen;if(cur===scr)return;STATE.prev=cur;
+  const cur=STATE.screen;if(cur===scr)return;
   const curEl=$('scr-'+cur);
   if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
   const newEl=$('scr-'+scr);
@@ -344,6 +361,7 @@ function updateHdr(scr){
   else av.style.display='none';
 }
 
+// ── Auth ─────────────────────────────────────────────────
 async function login(){
   const email=val('l-email'),pass=val('l-pass');
   if(!email||!pass){showErr('l-err','Please fill in all fields');return;}
@@ -385,7 +403,7 @@ async function loadHome(){
   $('cnt-daily').textContent=all.filter(r=>r.type==='daily').length;
 }
 
-// ── Photo handling ────────────────────────────────────────
+// ── Photo ─────────────────────────────────────────────────
 function initStockForm(){
   STATE.photoFile.s=null;const p=STATE.profile||{};
   $('stock-ini').textContent=ini(p.name);$('stock-name').textContent=p.name||'-';$('stock-ts').textContent='Date: '+nowStr();
@@ -398,13 +416,11 @@ function initDailyForm(){
   ['d-proj','d-cont','d-desc','d-rem'].forEach(id=>{const e=$(id);if(e)e.value='';});
   hideErr('d-err');resetPhoto('d');setupPhotoZone('d');
 }
-
 function resetPhoto(p){
   const pa=$(p+'-pa');if(!pa)return;
   pa.innerHTML='<div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div><div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div><div class="pa-btns"><button class="pa-btn" onclick="document.getElementById(\''+p+'-file\').click()">&#128247; Camera</button><button class="pa-btn ghost" onclick="document.getElementById(\''+p+'-file-gallery\').click()">&#128440; Gallery</button></div>';
 }
-
-function setPhotoFromFile(prefix, file){
+function setPhotoFromFile(prefix,file){
   if(!file||!file.type.startsWith('image/'))return;
   STATE.photoFile[prefix]=file;
   const r=new FileReader();
@@ -415,50 +431,32 @@ function setPhotoFromFile(prefix, file){
   };
   r.readAsDataURL(file);
 }
-
-function loadPhoto(prefix,input){
-  const file=input.files[0];
-  setPhotoFromFile(prefix,file);
-}
-
+function loadPhoto(prefix,input){setPhotoFromFile(prefix,input.files[0]);}
 function setupPhotoZone(prefix){
   const pa=$(prefix+'-pa');if(!pa)return;
-
-  // Drag & drop
   pa.addEventListener('dragover',e=>{e.preventDefault();pa.classList.add('drag-over');});
   pa.addEventListener('dragleave',()=>pa.classList.remove('drag-over'));
-  pa.addEventListener('drop',e=>{
-    e.preventDefault();pa.classList.remove('drag-over');
-    const file=e.dataTransfer.files[0];
-    setPhotoFromFile(prefix,file);
-  });
-
-  // Paste anywhere on screen when this form is active
-  pa._pasteHandler=e=>{
-    if(STATE.screen!==prefix&&STATE.screen!==('stock'===prefix?'stock':'daily'))return;
-    const items=e.clipboardData?.items;
-    if(!items)return;
-    for(const item of items){
-      if(item.type.startsWith('image/')){
-        const file=item.getAsFile();
-        setPhotoFromFile(prefix,file);
-        toast('Photo pasted!');
-        break;
-      }
-    }
+  pa.addEventListener('drop',e=>{e.preventDefault();pa.classList.remove('drag-over');setPhotoFromFile(prefix,e.dataTransfer.files[0]);});
+  if(pa._ph)document.removeEventListener('paste',pa._ph);
+  pa._ph=e=>{
+    if(!['stock','daily'].includes(STATE.screen))return;
+    const pfx=STATE.screen==='stock'?'s':'d';
+    if(pfx!==prefix)return;
+    const items=e.clipboardData?.items;if(!items)return;
+    for(const item of items){if(item.type.startsWith('image/')){setPhotoFromFile(prefix,item.getAsFile());toast('Photo pasted!');break;}}
   };
-  document.addEventListener('paste',pa._pasteHandler);
+  document.addEventListener('paste',pa._ph);
 }
-
 async function uploadPhoto(prefix){
   const file=STATE.photoFile[prefix];if(!file)return null;
   const ext=(file.name||'photo.jpg').split('.').pop()||'jpg';
   const path=STATE.user.id+'/'+Date.now()+'_'+prefix+'.'+ext;
   const{error}=await sb.storage.from('report-photos').upload(path,file,{upsert:true});
-  if(error){toast('Photo upload failed - report saved without photo');return null;}
+  if(error){toast('Photo upload failed - saved without photo');return null;}
   return sb.storage.from('report-photos').getPublicUrl(path).data.publicUrl;
 }
 
+// ── Submit ────────────────────────────────────────────────
 async function submitStock(){
   const proj=val('s-proj'),from=val('s-from'),to=val('s-to'),inst=val('s-inst');
   if(!proj||!from||!to||!inst){showErr('s-err','Please fill all required fields (*)');return;}
@@ -489,6 +487,7 @@ async function submitDaily(){
   toast('Daily report saved!');show('home');
 }
 
+// ── Records ───────────────────────────────────────────────
 async function loadRecords(){
   const list=$('records-list');
   list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading records...</span></div>';
@@ -496,7 +495,7 @@ async function loadRecords(){
   if(STATE.tab!=='all')q=q.eq('type',STATE.tab);
   const{data,error}=await q;
   STATE.records=data||[];
-  if(error){list.innerHTML='<div class="em"><div class="em-ico">&#9888;</div><p>'+error.message+'</p></div>';return;}
+  if(error){list.innerHTML='<div class="em"><p>'+error.message+'</p></div>';return;}
   const allC=(await sb.from('reports').select('id')).data?.length||0;
   const sC=(await sb.from('reports').select('id').eq('type','stock')).data?.length||0;
   const dC=(await sb.from('reports').select('id').eq('type','daily')).data?.length||0;
@@ -515,8 +514,8 @@ function viewRec(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   const row=(l,v)=>v?'<div class="dr"><span class="dl">'+l+'</span><span class="dv">'+v+'</span></div>':'';
   let rows='';
-  if(r.type==='stock'){rows=[row('Project',r.project),row('From',r.from_location),row('To',r.to_location),row('Instructed By',r.instructed_by),row('Received By',r.received_by),row('Items',r.items),row('Qty / Unit',r.qty),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
-  else{rows=[row('Project',r.project),row('Report Type',r.report_type),row('Contractor',r.contractor),row('Description',r.description),row('Remarks',r.remarks),row('Submitted By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
+  if(r.type==='stock'){rows=[row('Project',r.project),row('From',r.from_location),row('To',r.to_location),row('Instructed By',r.instructed_by),row('Received By',r.received_by),row('Items',r.items),row('Qty',r.qty),row('By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
+  else{rows=[row('Project',r.project),row('Type',r.report_type),row('Contractor',r.contractor),row('Description',r.description),row('Remarks',r.remarks),row('By',r.submitted_by_name),row('Date',fmtDt(r.created_at))].join('');}
   const canDel=r.submitted_by===STATE.user?.id;
   const m=document.createElement('div');m.className='modal-bg';m.id='mod';m.style.cssText='position:fixed;inset:0';
   m.innerHTML='<div class="modal" style="position:relative"><button class="mc" onclick="document.getElementById(\'mod\').remove()">&#x2715;</button><h3>'+(r.type==='stock'?'Stock Report':'Daily Report')+'</h3>'+(r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover;margin-bottom:14px;display:block">':'<div style="background:#f5f8fc;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:14px">No photo attached</div>')+rows+'<div style="display:flex;gap:8px;margin-top:16px">'+(canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+'<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
@@ -527,33 +526,269 @@ async function deleteRec(id){
   await sb.from('reports').delete().eq('id',id);
   document.getElementById('mod')?.remove();toast('Report deleted');loadRecords();
 }
-async function exportExcel(){
-  toast('Preparing Excel file...',4000);
+
+// ── EXCEL EXPORTS ─────────────────────────────────────────
+async function exportStockExcel(){
+  toast('Preparing Stock Excel...',3000);
+  const{data:stocks}=await sb.from('reports').select('*').eq('type','stock').order('created_at',{ascending:false});
+  const wb=XLSX.utils.book_new();
+  const hdr=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items / Description','Qty / Unit','Submitted By','Photo URL'];
+  const rows=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.qty||'',r.submitted_by_name||'',r.photo_url||'']);
+  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);
+  ws['!cols']=[{wch:5},{wch:20},{wch:26},{wch:16},{wch:16},{wch:20},{wch:18},{wch:34},{wch:12},{wch:20},{wch:40}];
+  ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
+  XLSX.utils.book_append_sheet(wb,ws,'Stock Reports');
+  XLSX.writeFile(wb,'CPC_Stock_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Stock Excel downloaded!');
+}
+
+async function exportDailyExcel(){
+  toast('Preparing Daily Excel...',3000);
+  const{data:dailies}=await sb.from('reports').select('*').eq('type','daily').order('created_at',{ascending:false});
+  const wb=XLSX.utils.book_new();
+  const hdr=['No.','Date & Time','Project / Site','Report Type','Contractor','Description','Remarks','Submitted By','Photo URL'];
+  const rows=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.submitted_by_name||'',r.photo_url||'']);
+  const ws=XLSX.utils.aoa_to_sheet([hdr,...rows]);
+  ws['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:26},{wch:40},{wch:34},{wch:20},{wch:40}];
+  ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
+  XLSX.utils.book_append_sheet(wb,ws,'Daily Reports');
+  XLSX.writeFile(wb,'CPC_Daily_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Daily Excel downloaded!');
+}
+
+async function exportSummaryExcel(){
+  toast('Preparing Summary Excel...',3000);
   const[{data:stocks},{data:dailies}]=await Promise.all([
     sb.from('reports').select('*').eq('type','stock').order('created_at',{ascending:false}),
     sb.from('reports').select('*').eq('type','daily').order('created_at',{ascending:false})
   ]);
   const wb=XLSX.utils.book_new();
-  const sH=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items / Description','Qty / Unit','Submitted By','Photo URL'];
-  const sR=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.qty||'',r.submitted_by_name||'',r.photo_url||'']);
-  const ws1=XLSX.utils.aoa_to_sheet([sH,...sR]);
-  ws1['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:18},{wch:20},{wch:20},{wch:36},{wch:12},{wch:20},{wch:40}];
+  // Summary sheet
+  const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
+  const ws0=XLSX.utils.aoa_to_sheet([
+    ['CPC SITE REPORT SUMMARY',''],
+    ['Exported By',STATE.profile?.name||''],['Role',STATE.profile?.role||''],['Export Date',today],['',''],
+    ['Report Type','Total'],
+    ['Stock Reports',(stocks||[]).length],
+    ['Daily / Incident Reports',(dailies||[]).length],
+    ['GRAND TOTAL',(stocks||[]).length+(dailies||[]).length]
+  ]);
+  ws0['!cols']=[{wch:30},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws0,'Summary');
+  // Stock sheet
+  const sh=['No.','Date & Time','Project','From','To','Instructed By','Received By','Items','Qty','By','Photo URL'];
+  const sr=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.qty||'',r.submitted_by_name||'',r.photo_url||'']);
+  const ws1=XLSX.utils.aoa_to_sheet([sh,...sr]);
+  ws1['!cols']=[{wch:5},{wch:20},{wch:24},{wch:16},{wch:16},{wch:18},{wch:18},{wch:30},{wch:10},{wch:18},{wch:40}];
   ws1['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws1,'Stock Reports');
-  const dH=['No.','Date & Time','Project / Site','Report Type','Contractor','Description','Remarks','Submitted By','Photo URL'];
-  const dR=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.submitted_by_name||'',r.photo_url||'']);
-  const ws2=XLSX.utils.aoa_to_sheet([dH,...dR]);
-  ws2['!cols']=[{wch:5},{wch:20},{wch:26},{wch:18},{wch:26},{wch:40},{wch:36},{wch:20},{wch:40}];
+  // Daily sheet
+  const dh=['No.','Date & Time','Project','Report Type','Contractor','Description','Remarks','By','Photo URL'];
+  const dr=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.submitted_by_name||'',r.photo_url||'']);
+  const ws2=XLSX.utils.aoa_to_sheet([dh,...dr]);
+  ws2['!cols']=[{wch:5},{wch:20},{wch:24},{wch:18},{wch:24},{wch:38},{wch:32},{wch:18},{wch:40}];
   ws2['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws2,'Daily Reports');
-  const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
-  const ws3=XLSX.utils.aoa_to_sheet([['CPC SITE REPORT SUMMARY',''],['Exported By',STATE.profile?.name||''],['Role',STATE.profile?.role||''],['Export Date',today],['',''],['Report Type','Total'],['Stock Reports',(stocks||[]).length],['Daily / Incident Reports',(dailies||[]).length],['GRAND TOTAL',(stocks||[]).length+(dailies||[]).length]]);
-  ws3['!cols']=[{wch:30},{wch:20}];
-  XLSX.utils.book_append_sheet(wb,ws3,'Summary');
-  XLSX.writeFile(wb,'CPC_SiteReports_'+new Date().toISOString().slice(0,10)+'.xlsx');
-  toast('Excel downloaded!');
+  XLSX.writeFile(wb,'CPC_Summary_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Summary Excel downloaded!');
 }
 
+// ── PDF EXPORTS ───────────────────────────────────────────
+// Load image as base64 for jsPDF
+function loadImgBase64(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.width;c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      resolve(c.toDataURL('image/jpeg',0.8));
+    };
+    img.onerror=()=>resolve(null);
+    img.src=url+'?t='+Date.now();
+  });
+}
+
+// Draw CPC header on PDF page
+function pdfHeader(doc, pageW, title, exportDate){
+  // Navy header bar
+  doc.setFillColor(15,39,68);
+  doc.rect(0,0,pageW,22,'F');
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('CPC SITE REPORTS',14,9);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(title,14,16);
+  doc.text('Exported: '+exportDate,pageW-14,16,'right');
+  doc.setTextColor(0,0,0);
+}
+
+// Draw one report block, returns new Y position
+function drawReportBlock(doc, r, imgData, y, pageW, pageH, isStock){
+  const margin=14;
+  const blockH = isStock ? 52 : 58;
+  const photoH = 68;
+  const totalH = blockH + (imgData ? photoH+4 : 0) + 8;
+
+  // New page if needed
+  if(y+totalH > pageH-14){
+    doc.addPage();
+    y=28;
+  }
+
+  // Light header bar for this report
+  doc.setFillColor(235,241,250);
+  doc.rect(margin,y,pageW-margin*2,8,'F');
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(15,39,68);
+  const reportLabel = isStock ? 'STOCK REPORT' : 'DAILY REPORT';
+  doc.text(reportLabel,margin+2,y+5.5);
+  doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+  doc.text(fmtDt(r.created_at),pageW-margin-2,y+5.5,'right');
+  y+=10;
+
+  // Details table
+  const col1=margin+2, col2=margin+42, rowH=7;
+  doc.setFontSize(8);
+  const details = isStock ? [
+    ['Project',r.project||'-'],
+    ['From',r.from_location||'-'],
+    ['To',r.to_location||'-'],
+    ['Instructed By',r.instructed_by||'-'],
+    ['Received By',r.received_by||'-'],
+    ['Items',r.items||'-'],
+    ['Qty / Unit',r.qty||'-'],
+    ['Submitted By',r.submitted_by_name||'-'],
+  ] : [
+    ['Project',r.project||'-'],
+    ['Report Type',r.report_type||'-'],
+    ['Contractor',r.contractor||'-'],
+    ['Description',r.description||'-'],
+    ['Remarks',r.remarks||'-'],
+    ['Submitted By',r.submitted_by_name||'-'],
+  ];
+
+  details.forEach(([label,value],i)=>{
+    if(i%2===0) doc.setFillColor(248,250,252);
+    else doc.setFillColor(255,255,255);
+    doc.rect(margin,y,pageW-margin*2,rowH,'F');
+    doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);
+    doc.text(label+':',col1,y+5);
+    doc.setFont('helvetica','normal');doc.setTextColor(20,20,20);
+    // Wrap long text
+    const maxW=pageW-margin*2-44;
+    const lines=doc.splitTextToSize(String(value),maxW);
+    doc.text(lines[0],col2,y+5);
+    y+=rowH;
+  });
+
+  // Border around details
+  doc.setDrawColor(213,220,232);doc.setLineWidth(0.3);
+  doc.rect(margin,y-details.length*rowH,pageW-margin*2,details.length*rowH);
+
+  y+=3;
+
+  // Photo
+  if(imgData){
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(100,100,100);
+    doc.text('PHOTO EVIDENCE',margin,y+4);
+    y+=6;
+    const imgW=pageW-margin*2;
+    const imgH=photoH;
+    doc.addImage(imgData,'JPEG',margin,y,imgW,imgH,'','FAST');
+    doc.setDrawColor(213,220,232);doc.setLineWidth(0.3);
+    doc.rect(margin,y,imgW,imgH);
+    y+=imgH+3;
+  } else {
+    doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(160,160,160);
+    doc.text('No photo attached',margin,y+4);
+    y+=8;
+  }
+
+  // Separator line
+  doc.setDrawColor(200,210,225);doc.setLineWidth(0.5);
+  doc.line(margin,y,pageW-margin,y);
+  y+=8;
+
+  return y;
+}
+
+async function exportStockPDF(){
+  toast('Building Stock PDF with photos...',8000);
+  const{data:stocks}=await sb.from('reports').select('*').eq('type','stock').order('created_at',{ascending:false});
+  if(!stocks||!stocks.length){toast('No stock reports found');return;}
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pageW=210,pageH=297;
+  const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
+
+  pdfHeader(doc,pageW,'Stock Reports — '+today,today);
+  let y=28;
+
+  for(let i=0;i<stocks.length;i++){
+    const r=stocks[i];
+    toast('Processing '+(i+1)+' of '+stocks.length+'...',3000);
+    let imgData=null;
+    if(r.photo_url) imgData=await loadImgBase64(r.photo_url);
+    // New page every 2 reports (except first)
+    if(i>0 && i%2===0){
+      doc.addPage();
+      pdfHeader(doc,pageW,'Stock Reports — '+today,today);
+      y=28;
+    }
+    y=drawReportBlock(doc,r,imgData,y,pageW,pageH,true);
+  }
+
+  // Page numbers
+  const totalPages=doc.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,150,150);
+    doc.text('CPC Site Reports — Confidential',14,pageH-6);
+    doc.text('Page '+p+' of '+totalPages,pageW-14,pageH-6,'right');
+  }
+
+  doc.save('CPC_Stock_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('Stock PDF downloaded!');
+}
+
+async function exportDailyPDF(){
+  toast('Building Daily PDF with photos...',8000);
+  const{data:dailies}=await sb.from('reports').select('*').eq('type','daily').order('created_at',{ascending:false});
+  if(!dailies||!dailies.length){toast('No daily reports found');return;}
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pageW=210,pageH=297;
+  const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
+
+  pdfHeader(doc,pageW,'Daily / Incident Reports — '+today,today);
+  let y=28;
+
+  for(let i=0;i<dailies.length;i++){
+    const r=dailies[i];
+    toast('Processing '+(i+1)+' of '+dailies.length+'...',3000);
+    let imgData=null;
+    if(r.photo_url) imgData=await loadImgBase64(r.photo_url);
+    if(i>0 && i%2===0){
+      doc.addPage();
+      pdfHeader(doc,pageW,'Daily / Incident Reports — '+today,today);
+      y=28;
+    }
+    y=drawReportBlock(doc,r,imgData,y,pageW,pageH,false);
+  }
+
+  const totalPages=doc.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){
+    doc.setPage(p);
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(150,150,150);
+    doc.text('CPC Site Reports — Confidential',14,pageH-6);
+    doc.text('Page '+p+' of '+totalPages,pageW-14,pageH-6,'right');
+  }
+
+  doc.save('CPC_Daily_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('Daily PDF downloaded!');
+}
+
+// ── PWA ───────────────────────────────────────────────────
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('install-banner').style.display='flex';});
 $('install-btn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;if(outcome==='accepted')toast('CPC Reports installed!');deferredPrompt=null;$('install-banner').style.display='none';});
@@ -561,10 +796,10 @@ function dismissInstall(){$('install-banner').style.display='none';}
 window.addEventListener('appinstalled',()=>{$('install-banner').style.display='none';toast('App installed!');});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,viewRec,deleteRec,exportExcel};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,viewRec,deleteRec,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF};
 
 (async()=>{
-  if(!initSB()){alert('Supabase credentials missing!\n\nOpen index.html and fill in SUPABASE_URL and SUPABASE_KEY.');return;}
+  if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY in index.html');return;}
   const{data:{session}}=await sb.auth.getSession();
   if(session){STATE.user=session.user;await loadProfile();show('home');}
   else show('login');
