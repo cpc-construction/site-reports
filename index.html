@@ -1124,37 +1124,41 @@ const exportDailyPDF=()=>runPDF('daily');
 
 // ── Project Picker (for Daily) ────────────────────────────
 async function loadPickProject(){
-  await loadProjectsData();
   const list=$('pick-proj-list');
+  list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading projects...</span></div>';
+  try{ await loadProjectsData(); } catch(e){ console.error(e); }
   if(!STATE.projects.length){
-    list.innerHTML='<div class="em"><p>No projects yet.</p></div>';
+    list.innerHTML='';
+    const msg=document.createElement('div');msg.className='em';msg.innerHTML='<p>No projects yet. Add one first.</p>';
+    list.appendChild(msg);
     const addBtn=document.createElement('button');
-    addBtn.className='btn btn-navy';addBtn.style.marginTop='10px';
-    addBtn.textContent='Add Projects';
-    addBtn.onclick=()=>App.show('projects');
+    addBtn.className='btn btn-navy';addBtn.style.marginTop='10px';addBtn.style.width='100%';
+    addBtn.textContent='Go to Manage Projects';
+    addBtn.onclick=()=>show('projects');
     list.appendChild(addBtn);
     return;
   }
-  list.innerHTML='<div style="display:flex;flex-direction:column;gap:9px">'+
-    STATE.projects.map(p=>
-      '<button class="ac pick-proj-btn" data-pidx="'+idx+'" style="padding:14px 16px">'+
-      '<div class="ac-ico" style="background:#f5f3ff;font-size:20px">&#127959;</div>'+
-      '<div><h2>'+p.name+'</h2><p>Tap to create daily report for this site</p></div></button>'
-    ).join('')+
-  +'</div>';
-  // Add "manage projects" button safely
-  const mgBtn=document.createElement('button');
-  mgBtn.className='ac';mgBtn.style.cssText='padding:12px 16px;border:2px dashed var(--border);box-shadow:none;background:transparent;margin-top:8px';
-  mgBtn.innerHTML='<div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#43;</div><div><h2 style="color:var(--accent)">Add New Project</h2><p>Manage your project sites</p></div>';
-  mgBtn.onclick=()=>show('projects');
-  list.querySelector('div').appendChild(mgBtn);
-  // Attach click handlers safely
-  list.querySelectorAll('.pick-proj-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const idx=parseInt(btn.dataset.pidx);
-      pickProject(STATE.projects[idx].name);
-    });
+  // Build project buttons safely with DOM, no inline onclick
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:9px';
+  STATE.projects.forEach((p,idx)=>{
+    const btn=document.createElement('button');
+    btn.className='ac';btn.style.padding='14px 16px';
+    btn.innerHTML='<div class="ac-ico" style="background:#f5f3ff;font-size:20px">&#127959;</div>'+
+      '<div><h2>'+p.name+'</h2><p>Tap to create daily report for this site</p></div>';
+    btn.addEventListener('click',()=>pickProject(p.name));
+    wrap.appendChild(btn);
   });
+  // Add manage projects button
+  const mgBtn=document.createElement('button');
+  mgBtn.className='ac';
+  mgBtn.style.cssText='padding:12px 16px;border:2px dashed var(--border);box-shadow:none;background:transparent';
+  mgBtn.innerHTML='<div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#43;</div>'+
+    '<div><h2 style="color:var(--accent)">Add New Project</h2><p>Manage your project sites</p></div>';
+  mgBtn.addEventListener('click',()=>show('projects'));
+  wrap.appendChild(mgBtn);
+  list.innerHTML='';
+  list.appendChild(wrap);
 }
 
 function pickProject(projName){
