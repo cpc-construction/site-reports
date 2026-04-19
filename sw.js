@@ -1,9 +1,10 @@
-const CACHE = 'cpc-reports-v1';
+const CACHE = 'cpc-reports-v2';
+const BASE = '/site-reports';
 const ASSETS = [
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  BASE + '/index.html',
+  BASE + '/manifest.json',
+  BASE + '/icon-192.png',
+  BASE + '/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
@@ -21,12 +22,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Network first for Supabase API calls
-  if (e.request.url.includes('supabase.co')) {
+  if (e.request.url.includes('supabase.co') || e.request.url.includes('cdn.jsdelivr.net')) {
     e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }
-  // Cache first for app assets
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
