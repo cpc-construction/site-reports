@@ -521,7 +521,7 @@ async function loadHome(){
       const pRecs=dailyRecs.filter(r=>r.project===proj.name);
       const total=pRecs.length;
       const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
-      return '<button onclick="App.goToProjectRecords(''+proj.name+'')" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+      return '<button data-pidx="'+idx+'" class="proj-home-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
         '<div>'+
         '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
         '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
@@ -530,6 +530,13 @@ async function loadHome(){
         '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
     }).join('')+
     (STATE.projects.length>0&&dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
+    // Attach click handlers safely
+    projList.querySelectorAll('.proj-home-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const idx=parseInt(btn.dataset.pidx);
+        goToProjectRecords(STATE.projects[idx].name);
+      });
+    });
   }
 }
 
@@ -1120,19 +1127,34 @@ async function loadPickProject(){
   await loadProjectsData();
   const list=$('pick-proj-list');
   if(!STATE.projects.length){
-    list.innerHTML='<div class="em"><p>No projects yet.</p><button class="btn btn-navy" onclick="App.show('projects')" style="margin-top:10px">Add Projects</button></div>';
+    list.innerHTML='<div class="em"><p>No projects yet.</p></div>';
+    const addBtn=document.createElement('button');
+    addBtn.className='btn btn-navy';addBtn.style.marginTop='10px';
+    addBtn.textContent='Add Projects';
+    addBtn.onclick=()=>App.show('projects');
+    list.appendChild(addBtn);
     return;
   }
   list.innerHTML='<div style="display:flex;flex-direction:column;gap:9px">'+
     STATE.projects.map(p=>
-      '<button class="ac" onclick="App.pickProject(''+p.name.replace(/'/g,"\'")+'')" style="padding:14px 16px">'+
+      '<button class="ac pick-proj-btn" data-pidx="'+idx+'" style="padding:14px 16px">'+
       '<div class="ac-ico" style="background:#f5f3ff;font-size:20px">&#127959;</div>'+
       '<div><h2>'+p.name+'</h2><p>Tap to create daily report for this site</p></div></button>'
     ).join('')+
-    '<button class="ac" onclick="App.show('projects')" style="padding:12px 16px;border:2px dashed var(--border);box-shadow:none;background:transparent">'+
-    '<div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#43;</div>'+
-    '<div><h2 style="color:var(--accent)">Add New Project</h2><p>Manage your project sites</p></div></button>'
   +'</div>';
+  // Add "manage projects" button safely
+  const mgBtn=document.createElement('button');
+  mgBtn.className='ac';mgBtn.style.cssText='padding:12px 16px;border:2px dashed var(--border);box-shadow:none;background:transparent;margin-top:8px';
+  mgBtn.innerHTML='<div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#43;</div><div><h2 style="color:var(--accent)">Add New Project</h2><p>Manage your project sites</p></div>';
+  mgBtn.onclick=()=>show('projects');
+  list.querySelector('div').appendChild(mgBtn);
+  // Attach click handlers safely
+  list.querySelectorAll('.pick-proj-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.pidx);
+      pickProject(STATE.projects[idx].name);
+    });
+  });
 }
 
 function pickProject(projName){
