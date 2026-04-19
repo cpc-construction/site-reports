@@ -191,20 +191,29 @@ input[type=file]{display:none}
         <div class="av" id="home-ini">?</div>
         <div><div style="font-size:14px;font-weight:700" id="home-name">-</div><div style="font-size:12px;color:var(--muted)" id="home-role">-</div></div>
       </div>
-      <div class="sg">
-        <div class="st"><div class="stn" id="cnt-stock" style="color:var(--navy)">-</div><div class="stl">Stock</div></div>
-        <div class="st"><div class="stn" id="cnt-daily" style="color:#78350f">-</div><div class="stl">Daily</div></div>
-        <div class="st"><div class="stn" id="cnt-draft" style="color:#9d174d">-</div><div class="stl">Drafts</div></div>
+      <!-- Overall counters -->
+      <div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Company Stock Flow</div>
+        <div class="sg">
+          <div class="st" style="box-shadow:none;border:1px solid var(--border)"><div class="stn" id="cnt-stock" style="color:var(--navy)">-</div><div class="stl">Stock Transfers</div></div>
+          <div class="st" style="box-shadow:none;border:1px solid var(--border)"><div class="stn" id="cnt-daily" style="color:#78350f">-</div><div class="stl">Daily Reports</div></div>
+          <div class="st" style="box-shadow:none;border:1px solid var(--border)"><div class="stn" id="cnt-draft" style="color:#9d174d">-</div><div class="stl">Drafts</div></div>
+        </div>
       </div>
       <div id="draft-alert" style="display:none" class="draft-banner">&#9998; You have drafts waiting — tap View Records to complete them</div>
+      <!-- Daily by project -->
+      <div style="background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Daily Reports by Project</div>
+        <div id="home-proj-list"><div style="font-size:13px;color:var(--hint);text-align:center;padding:10px 0">Loading...</div></div>
+      </div>
       <div style="font-size:13px;font-weight:800;color:var(--navy)">Create New Report</div>
       <button class="ac" onclick="App.show('stock')">
         <div class="ac-ico" style="background:#dbeafe">&#128230;</div>
         <div><h2>Stock Report</h2><p>Material delivery — photo, from/to, qty, on behalf of</p></div>
       </button>
-      <button class="ac" onclick="App.show('daily')">
+      <button class="ac" onclick="App.show('pick-project')">
         <div class="ac-ico" style="background:#fef3c7">&#128203;</div>
-        <div><h2>Daily / Incident Report</h2><p>Work progress, incidents, contractor activities</p></div>
+        <div><h2>Daily / Incident Report</h2><p>Select project site first, then fill report</p></div>
       </button>
       <button class="ac" onclick="App.show('records')" style="padding:13px 16px">
         <div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#128193;</div>
@@ -360,9 +369,17 @@ input[type=file]{display:none}
         <button class="tab"    id="tab-stock" onclick="App.setTab('stock')">Stock</button>
         <button class="tab"    id="tab-daily" onclick="App.setTab('daily')">Daily</button>
       </div>
+      <!-- Project filter -->
+      <div class="fl">
+        <div class="lbl">Filter by Project</div>
+        <select class="inp" id="rec-proj-filter" onchange="App.loadRecords()">
+          <option value="">All Projects</option>
+        </select>
+      </div>
       <!-- Export -->
       <div class="exp-section">
         <div style="font-size:13px;font-weight:800;color:var(--navy)">&#128196; Export Reports</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:-4px">Exports follow the project filter above</div>
         <div class="exp-label">&#128230; Stock</div>
         <div class="exp-row">
           <button class="btn btn-excel" onclick="App.exportStockExcel()"><span>&#128202;</span> Excel</button>
@@ -379,6 +396,14 @@ input[type=file]{display:none}
       <div id="records-list"></div>
     </div>
 
+
+    <!-- PROJECT PICKER for Daily -->
+    <div class="screen hidden" id="scr-pick-project">
+      <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px">Select Project Site</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:2px">Choose the site for this daily report</div>
+      <div id="pick-proj-list"><div class="ld"><div class="spin"></div><span>Loading...</span></div></div>
+      <button class="btn btn-ghost" onclick="App.show('home')" style="margin-top:4px">Cancel</button>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -387,14 +412,14 @@ input[type=file]{display:none}
 // =============================================
 //  PASTE YOUR SUPABASE CREDENTIALS HERE
 // =============================================
-const SUPABASE_URL = 'https://zpmjcdbqynebhyprqmrf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbWpjZGJxeW5lYmh5cHJxbXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MDMyNTksImV4cCI6MjA4NDM3OTI1OX0.68k7Ni0EfEVzKOa-tp9_d5QQ0Xh2u1scv_TdGwnXMtE';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 // =============================================
 
 let sb=null;
 function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
 
-const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[],projects:[],locations:[],editId:null};
+const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[],projects:[],locations:[],editId:null,selectedProject:null};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value.trim():''};
 const ini=n=>n?n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2):'?';
@@ -405,8 +430,8 @@ function toast(msg,dur=2800){const t=$('toast');t.textContent=msg;t.classList.ad
 function showErr(id,msg){const e=$(id);if(e){e.style.display='block';e.textContent='Warning: '+msg;}}
 function hideErr(id){const e=$(id);if(e)e.style.display='none';}
 
-const BACK={stock:'home',daily:'home',records:'home',register:'login',projects:'home'};
-const TITLES={login:'CPC Site Reports',register:'Create Account',home:'Dashboard',stock:'Stock Report',daily:'Daily Report',records:'Records',projects:'Manage Projects'};
+const BACK={stock:'home',daily:'home',records:'home',register:'login',projects:'home','pick-project':'home'};
+const TITLES={login:'CPC Site Reports',register:'Create Account',home:'Dashboard',stock:'Stock Report',daily:'Daily Report',records:'Records',projects:'Manage Projects','pick-project':'Select Project Site'};
 
 function show(scr){
   const cur=STATE.screen;if(cur===scr)return;
@@ -421,6 +446,10 @@ function show(scr){
   if(scr==='stock')initForm('s');
   if(scr==='daily')initForm('d');
   if(scr==='projects')loadProjects();
+  if(scr==='pick-project')loadPickProject();
+  if(scr==='daily'&&STATE.selectedProject){
+    // pre-fill project from picker — handled in initForm
+  }
 }
 function goBack(){show(BACK[STATE.screen]||'home');}
 function updateHdr(scr){
@@ -470,13 +499,38 @@ async function loadHome(){
   const p=STATE.profile||{};
   $('home-ini').textContent=ini(p.name);$('home-name').textContent=p.name||'-';$('home-role').textContent=p.role||'-';
   $('cnt-stock').textContent='...';$('cnt-daily').textContent='...';$('cnt-draft').textContent='...';
-  const{data}=await sb.from('reports').select('type,status');
-  const all=data||[];
+  // Load counts and projects in parallel
+  const[{data:allRecs},{data:projs}]=await Promise.all([
+    sb.from('reports').select('type,status,project'),
+    sb.from('projects').select('*').eq('active',true).order('name')
+  ]);
+  STATE.projects=projs||[];
+  const all=allRecs||[];
   const drafts=all.filter(r=>r.status==='draft').length;
   $('cnt-stock').textContent=all.filter(r=>r.type==='stock'&&r.status!=='draft').length;
   $('cnt-daily').textContent=all.filter(r=>r.type==='daily'&&r.status!=='draft').length;
   $('cnt-draft').textContent=drafts;
   $('draft-alert').style.display=drafts>0?'flex':'none';
+  // Build daily by project breakdown
+  const projList=$('home-proj-list');
+  const dailyRecs=all.filter(r=>r.type==='daily'&&r.status!=='draft');
+  if(!STATE.projects.length){
+    projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
+  } else {
+    projList.innerHTML=STATE.projects.map(proj=>{
+      const pRecs=dailyRecs.filter(r=>r.project===proj.name);
+      const total=pRecs.length;
+      const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
+      return '<button onclick="App.goToProjectRecords(''+proj.name+'')" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+        '<div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
+        '&#128203; '+total+' report'+(total!==1?'s':'')+
+        (incidents>0?' &nbsp;&#9888;&#65039; '+incidents+' incident'+(incidents!==1?'s':''):'')+'</div></div>'+
+        '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
+    }).join('')+
+    (STATE.projects.length>0&&dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
+  }
 }
 
 // ── Projects & Locations ──────────────────────────────────
@@ -558,6 +612,16 @@ async function initForm(prefix){
   resetPhoto(prefix);setupPhotoZone(prefix);
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
+  // Pre-select project if coming from project picker
+  if(!isS&&STATE.selectedProject){
+    const sel=$(prefix+'-proj-sel');
+    if(sel){
+      const opt=Array.from(sel.options).find(o=>o.value===STATE.selectedProject);
+      if(opt){sel.value=STATE.selectedProject;}
+      else{sel.value='__other__';$(prefix+'-proj-txt').value=STATE.selectedProject;$(prefix+'-proj-txt').classList.add('show');}
+    }
+    STATE.selectedProject=null;
+  }
 }
 
 // ── Load draft for editing ────────────────────────────────
@@ -716,10 +780,21 @@ async function submitDaily(){
 async function loadRecords(){
   const list=$('records-list');
   list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading...</span></div>';
+  // Populate project filter dropdown
+  const pf=$('rec-proj-filter');
+  if(pf&&STATE.projects.length){
+    const cur=pf.value;
+    pf.innerHTML='<option value="">All Projects</option>'+STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
+    if(cur)pf.value=cur;
+    // If coming from project tap on home, pre-select
+    if(STATE.selectedProject){pf.value=STATE.selectedProject;STATE.selectedProject=null;}
+  }
+  const projFilter=pf?pf.value:'';
   let q=sb.from('reports').select('*').order('created_at',{ascending:false});
   if(STATE.tab==='draft')q=q.eq('status','draft');
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
   else if(STATE.tab==='daily')q=q.eq('type','daily').neq('status','draft');
+  if(projFilter)q=q.eq('project',projFilter);
   const{data,error}=await q;
   STATE.records=data||[];
   if(error){list.innerHTML='<p style="padding:20px;color:var(--danger)">'+error.message+'</p>';return;}
@@ -776,10 +851,85 @@ async function deleteRec(id){
   document.getElementById('mod')?.remove();toast('Deleted');loadRecords();
 }
 
+
+// ── Export helpers ────────────────────────────────────────
+function getExportProject(){
+  const pf=$('rec-proj-filter');return pf?pf.value:'';
+}
+function exportProjectLabel(){
+  const p=getExportProject();return p?p:'All Projects';
+}
+
+// ── PDF cover page ────────────────────────────────────────
+function pdfCoverPage(doc,pageW,pageH,type,recs,projLabel,today){
+  // Navy header
+  doc.setFillColor(15,39,68);doc.rect(0,0,pageW,pageH,'F');
+  // Gold accent bar
+  doc.setFillColor(184,151,58);doc.rect(0,pageH*0.42,pageW,2,'F');
+
+  // CPC gold title
+  doc.setFontSize(32);doc.setFont('helvetica','bold');doc.setTextColor(184,151,58);
+  doc.text('CPC',pageW/2,80,'center');
+  doc.setFontSize(13);doc.setFont('helvetica','normal');doc.setTextColor(200,210,230);
+  doc.text('SITE REPORTS',pageW/2,92,'center');
+
+  // Report type
+  const typeLabel=type==='stock'?'STOCK TRANSFER REPORT':'DAILY / INCIDENT REPORT';
+  doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text(typeLabel,pageW/2,120,'center');
+
+  // Project
+  doc.setFontSize(11);doc.setFont('helvetica','normal');doc.setTextColor(180,200,225);
+  doc.text('Project Site',pageW/2,136,'center');
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text(projLabel,pageW/2,146,'center');
+
+  // Summary box
+  const bx=30,by=158,bw=pageW-60,bh=type==='stock'?34:50;
+  doc.setFillColor(255,255,255,0.08);
+  doc.setDrawColor(184,151,58);doc.setLineWidth(0.5);
+  doc.roundedRect(bx,by,bw,bh,3,3,'S');
+
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,200,225);
+  let iy=by+10;
+  if(type==='stock'){
+    doc.text('Total Stock Transfers:',bx+8,iy);doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.text(String(recs.length),bx+bw-8,iy,'right');
+  } else {
+    const types={};
+    recs.forEach(r=>{const t=r.report_type||'Other';types[t]=(types[t]||0)+1;});
+    doc.text('Total Reports:',bx+8,iy);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.text(String(recs.length),bx+bw-8,iy,'right');
+    iy+=8;
+    Object.entries(types).forEach(([t,c])=>{
+      doc.setFont('helvetica','normal');doc.setTextColor(180,200,225);doc.text('  '+t+':',bx+8,iy);
+      doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.text(String(c),bx+bw-8,iy,'right');
+      iy+=7;
+    });
+  }
+
+  // Period
+  if(recs.length>0){
+    const dates=recs.map(r=>new Date(r.created_at)).sort((a,b)=>a-b);
+    const fmt=d=>d.toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'});
+    const period=fmt(dates[0])+(dates.length>1?' — '+fmt(dates[dates.length-1]):'');
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,200,225);
+    doc.text('Period: '+period,pageW/2,by+bh+12,'center');
+  }
+
+  // Footer
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(120,140,170);
+  doc.text('Prepared by: '+(STATE.profile?.name||'')+'   |   '+today,pageW/2,pageH-20,'center');
+  doc.text('CPC Site Reports — Confidential',pageW/2,pageH-12,'center');
+
+  doc.addPage();
+}
+
 // ── EXCEL EXPORTS ────────────────────────────────────────
 async function exportStockExcel(){
   toast('Preparing Stock Excel...',3000);
-  const{data:stocks}=await sb.from('reports').select('*').eq('type','stock').neq('status','draft').order('created_at',{ascending:false});
+  const proj=getExportProject();
+  let q=sb.from('reports').select('*').eq('type','stock').neq('status','draft').order('created_at',{ascending:false});
+  if(proj)q=q.eq('project',proj);
+  const{data:stocks}=await q;
   const wb=XLSX.utils.book_new();
   const hdr=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items','Qty / Unit','On Behalf Of','Logged By','Photo URL'];
   const rows=(stocks||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.from_location||'',r.to_location||'',r.instructed_by||'',r.received_by||'',r.items||'',r.qty||'',r.on_behalf_of||'',r.submitted_by_name||'',r.photo_url||'']);
@@ -792,7 +942,10 @@ async function exportStockExcel(){
 }
 async function exportDailyExcel(){
   toast('Preparing Daily Excel...',3000);
-  const{data:dailies}=await sb.from('reports').select('*').eq('type','daily').neq('status','draft').order('created_at',{ascending:false});
+  const proj=getExportProject();
+  let q=sb.from('reports').select('*').eq('type','daily').neq('status','draft').order('created_at',{ascending:false});
+  if(proj)q=q.eq('project',proj);
+  const{data:dailies}=await q;
   const wb=XLSX.utils.book_new();
   const hdr=['No.','Date & Time','Project / Site','Report Type','Contractor','Description','Remarks','On Behalf Of','Logged By','Photo URL'];
   const rows=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.on_behalf_of||'',r.submitted_by_name||'',r.photo_url||'']);
@@ -805,10 +958,11 @@ async function exportDailyExcel(){
 }
 async function exportSummaryExcel(){
   toast('Preparing Summary...',3000);
-  const[{data:stocks},{data:dailies}]=await Promise.all([
-    sb.from('reports').select('*').eq('type','stock').neq('status','draft').order('created_at',{ascending:false}),
-    sb.from('reports').select('*').eq('type','daily').neq('status','draft').order('created_at',{ascending:false})
-  ]);
+  const proj=getExportProject();
+  let sq=sb.from('reports').select('*').eq('type','stock').neq('status','draft').order('created_at',{ascending:false});
+  let dq=sb.from('reports').select('*').eq('type','daily').neq('status','draft').order('created_at',{ascending:false});
+  if(proj){sq=sq.eq('project',proj);dq=dq.eq('project',proj);}
+  const[{data:stocks},{data:dailies}]=await Promise.all([sq,dq]);
   const wb=XLSX.utils.book_new();
   const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
   const ws0=XLSX.utils.aoa_to_sheet([['CPC SITE REPORT SUMMARY',''],['Exported By',STATE.profile?.name||''],['Role',STATE.profile?.role||''],['Export Date',today],['',''],['Report Type','Total'],['Stock Reports',(stocks||[]).length],['Daily / Incident Reports',(dailies||[]).length],['GRAND TOTAL',(stocks||[]).length+(dailies||[]).length]]);
@@ -919,8 +1073,12 @@ function drawRow(doc,r,imgData,y,pageW,pageH,isStock){
 
 async function runPDF(type){
   const label=type==='stock'?'Stock':'Daily';
+  const proj=getExportProject();
+  const projLabel=exportProjectLabel();
   toast('Building '+label+' PDF...',10000);
-  const{data:recs}=await sb.from('reports').select('*').eq('type',type).neq('status','draft').order('created_at',{ascending:false});
+  let q=sb.from('reports').select('*').eq('type',type).neq('status','draft').order('created_at',{ascending:false});
+  if(proj)q=q.eq('project',proj);
+  const{data:recs}=await q;
   if(!recs||!recs.length){toast('No '+label.toLowerCase()+' reports found');return;}
 
   const{jsPDF}=window.jspdf;
@@ -928,7 +1086,10 @@ async function runPDF(type){
   const pageW=210,pageH=297;
   const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
 
-  pdfHeader(doc,pageW,label+' Reports — '+today,today);
+  // Cover page
+  pdfCoverPage(doc,pageW,pageH,type,recs,projLabel,today);
+
+  pdfHeader(doc,pageW,label+' Reports — '+projLabel,today);
   let y=22;
 
   for(let i=0;i<recs.length;i++){
@@ -953,6 +1114,37 @@ async function runPDF(type){
 const exportStockPDF=()=>runPDF('stock');
 const exportDailyPDF=()=>runPDF('daily');
 
+
+// ── Project Picker (for Daily) ────────────────────────────
+async function loadPickProject(){
+  await loadProjectsData();
+  const list=$('pick-proj-list');
+  if(!STATE.projects.length){
+    list.innerHTML='<div class="em"><p>No projects yet.</p><button class="btn btn-navy" onclick="App.show('projects')" style="margin-top:10px">Add Projects</button></div>';
+    return;
+  }
+  list.innerHTML='<div style="display:flex;flex-direction:column;gap:9px">'+
+    STATE.projects.map(p=>
+      '<button class="ac" onclick="App.pickProject(''+p.name.replace(/'/g,"\'")+'')" style="padding:14px 16px">'+
+      '<div class="ac-ico" style="background:#f5f3ff;font-size:20px">&#127959;</div>'+
+      '<div><h2>'+p.name+'</h2><p>Tap to create daily report for this site</p></div></button>'
+    ).join('')+
+    '<button class="ac" onclick="App.show('projects')" style="padding:12px 16px;border:2px dashed var(--border);box-shadow:none;background:transparent">'+
+    '<div class="ac-ico" style="background:#f0fdf4;font-size:20px">&#43;</div>'+
+    '<div><h2 style="color:var(--accent)">Add New Project</h2><p>Manage your project sites</p></div></button>'
+  +'</div>';
+}
+
+function pickProject(projName){
+  STATE.selectedProject=projName;
+  show('daily');
+}
+
+function goToProjectRecords(projName){
+  STATE.selectedProject=projName;
+  show('records');
+}
+
 // ── PWA ──────────────────────────────────────────────────
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('install-banner').style.display='flex';});
@@ -961,7 +1153,7 @@ function dismissInstall(){$('install-banner').style.display='none';}
 window.addEventListener('appinstalled',()=>{$('install-banner').style.display='none';});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords};
 
 (async()=>{
   if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY.');return;}
