@@ -12,6 +12,7 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
+<script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -409,12 +410,8 @@ input[type=file]{display:none}
 <div class="toast" id="toast"></div>
 
 <script>
-// =============================================
-//  PASTE YOUR SUPABASE CREDENTIALS HERE
-// =============================================
-const SUPABASE_URL = 'https://zpmjcdbqynebhyprqmrf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwbWpjZGJxeW5lYmh5cHJxbXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MDMyNTksImV4cCI6MjA4NDM3OTI1OX0.68k7Ni0EfEVzKOa-tp9_d5QQ0Xh2u1scv_TdGwnXMtE';
-// =============================================
+// Credentials loaded from config.js
+
 
 let sb=null;
 function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
