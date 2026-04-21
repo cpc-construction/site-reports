@@ -228,6 +228,7 @@ input[type=file]{display:none}
       </div>
       <div class="err" id="ps-err"></div>
       <button class="btn btn-gold" onclick="App.saveProfile()">Save &amp; Continue &#8594;</button>
+      <button class="btn btn-ghost" onclick="App.forceSignOut()" style="margin-top:4px;font-size:13px">Wrong account? Sign out</button>
     </div>
 
     <!-- REGISTER -->
@@ -1255,6 +1256,17 @@ async function loadProfileAndRedirect(){
   return true;
 }
 
+async function forceSignOut(){
+  await sb.auth.signOut();
+  STATE.user=null;STATE.profile=null;
+  // Clear any cached data
+  Object.keys(localStorage).forEach(k=>{
+    if(k.includes('supabase')||k.includes('sb-'))localStorage.removeItem(k);
+  });
+  show('login');
+  toast('Signed out — please sign in again');
+}
+
 async function saveProfile(){
   const name=val('ps-name'),role=val('ps-role');
   if(!name||!role){showErr('ps-err','Please fill in all fields');return;}
@@ -1269,17 +1281,45 @@ async function saveProfile(){
   show('home');
 }
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
   if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY.');return;}
-  const{data:{session}}=await sb.auth.getSession();
-  if(session){
-    STATE.user=session.user;
+  // Safety timeout - if anything hangs for 8 seconds, force go to login
+  const safetyTimer=setTimeout(async()=>{
+    console.log('Safety timeout - clearing session');
+    try{ await sb.auth.signOut(); }catch(e){}
+    Object.keys(localStorage).forEach(k=>{
+      if(k.includes('supabase')||k.includes('sb-'))localStorage.removeItem(k);
+    });
+    show('login');
+    toast('Session expired. Please sign in again.');
+  },8000);
+  try{
+    const{data:{session},error}=await sb.auth.getSession();
+    if(error||!session){
+      clearTimeout(safetyTimer);
+      try{ await sb.auth.signOut(); }catch(e){}
+      show('login');
+      return;
+    }
+    const{data:{user},error:userErr}=await sb.auth.getUser();
+    if(userErr||!user){
+      clearTimeout(safetyTimer);
+      await sb.auth.signOut();
+      show('login');
+      return;
+    }
+    STATE.user=user;
     const hasProfile=await loadProfileAndRedirect();
-    if(hasProfile)show('home');}
-  else show('login');
+    clearTimeout(safetyTimer);
+    if(hasProfile)show('home');
+  } catch(e){
+    clearTimeout(safetyTimer);
+    try{ await sb.auth.signOut(); }catch(e2){}
+    show('login');
+  }
 })();
 </script>
 </body>
