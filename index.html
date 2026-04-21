@@ -1215,9 +1215,9 @@ if('serviceWorker' in navigator){
 }
 
 async function loadProfileAndRedirect(){
-  const{data}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
-  STATE.profile=data;
-  if(!data){
+  const{data,error}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
+  if(error||!data){
+    STATE.profile=null;
     show('profile-setup');
     return false;
   }
