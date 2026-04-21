@@ -1215,9 +1215,9 @@ if('serviceWorker' in navigator){
 }
 
 async function loadProfileAndRedirect(){
-  const{data,error}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
-  if(error||!data){
-    STATE.profile=null;
+  const{data}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
+  STATE.profile=data;
+  if(!data){
     show('profile-setup');
     return false;
   }
@@ -1230,12 +1230,20 @@ async function saveProfile(){
   hideErr('ps-err');
   const btn=document.querySelector('#scr-profile-setup .btn-gold');
   btn.textContent='Saving...';btn.disabled=true;
-  const{error}=await sb.from('profiles').insert({id:STATE.user.id,name,role});
+  // Try insert first, if duplicate try update
+  let error;
+  const ins=await sb.from('profiles').insert({id:STATE.user.id,name,role});
+  if(ins.error){
+    // May already exist, try upsert
+    const ups=await sb.from('profiles').upsert({id:STATE.user.id,name,role});
+    error=ups.error;
+  }
   btn.textContent='Save & Continue →';btn.disabled=false;
   if(error){showErr('ps-err',error.message);return;}
-  STATE.profile={name,role};
-  toast('Welcome, '+name+'! Profile saved.');
-  show('home');
+  STATE.profile={id:STATE.user.id,name,role};
+  toast('Welcome, '+name+'!');
+  // Small delay for mobile to settle before transition
+  setTimeout(()=>show('home'),300);
 }
 
 const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile};
