@@ -140,6 +140,38 @@ input[type=file]{display:none}
 </style>
 </head>
 <body>
+
+<!-- PROFILE SETUP (first time login) -->
+<div class="screen login-wrap hidden" id="scr-profile-setup">
+  <div class="logo">
+    <img class="logo-img" src="icon-512.png" alt="CPC Logo">
+    <h2>Welcome to CPC!</h2>
+    <p>Please complete your profile to continue</p>
+  </div>
+  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rsm);padding:11px 14px;font-size:13px;color:#1e40af;line-height:1.5">
+    👋 This is a one-time setup. You won't be asked again.
+  </div>
+  <div class="fl"><div class="lbl">Full Name *</div>
+    <input class="inp" id="ps-name" placeholder="e.g. Ahmad Bin Ali">
+  </div>
+  <div class="fl"><div class="lbl">Role / Position *</div>
+    <select class="inp" id="ps-role">
+      <option value="">Select your role...</option>
+      <option>Site Supervisor</option>
+      <option>Safety Officer</option>
+      <option>Project Manager</option>
+      <option>Foreman</option>
+      <option>Engineer</option>
+      <option>Inspector</option>
+      <option>Storekeeper</option>
+      <option>Driver</option>
+      <option>Other</option>
+    </select>
+  </div>
+  <div class="err" id="ps-err"></div>
+  <button class="btn btn-gold" onclick="App.saveProfile()">Save &amp; Continue →</button>
+</div>
+
 <div id="app">
   <div class="install-banner" id="install-banner" style="display:none">
     <img src="icon-192.png" alt="CPC">
@@ -467,7 +499,9 @@ async function login(){
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
   btn.textContent='Sign In';btn.disabled=false;
   if(error){showErr('l-err',error.message);return;}
-  STATE.user=data.user;await loadProfile();show('home');
+  STATE.user=data.user;
+  const hasProfile=await loadProfileAndRedirect();
+  if(hasProfile)show('home');
 }
 async function register(){
   const name=val('r-name'),role=val('r-role'),email=val('r-email'),pass=val('r-pass');
@@ -1180,12 +1214,40 @@ if('serviceWorker' in navigator){
     .catch(e => console.log('SW error:', e));
 }
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords};
+async function loadProfileAndRedirect(){
+  const{data}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
+  STATE.profile=data;
+  if(!data){
+    show('profile-setup');
+    return false;
+  }
+  return true;
+}
+
+async function saveProfile(){
+  const name=val('ps-name'),role=val('ps-role');
+  if(!name||!role){showErr('ps-err','Please fill in all fields');return;}
+  hideErr('ps-err');
+  const btn=document.querySelector('#scr-profile-setup .btn-gold');
+  btn.textContent='Saving...';btn.disabled=true;
+  const{error}=await sb.from('profiles').insert({id:STATE.user.id,name,role});
+  btn.textContent='Save & Continue →';btn.disabled=false;
+  if(error){showErr('ps-err',error.message);return;}
+  STATE.profile={name,role};
+  toast('Welcome, '+name+'! Profile saved.');
+  show('home');
+}
+
+const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile};
+
 
 (async()=>{
   if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY.');return;}
   const{data:{session}}=await sb.auth.getSession();
-  if(session){STATE.user=session.user;await loadProfile();show('home');}
+  if(session){
+    STATE.user=session.user;
+    const hasProfile=await loadProfileAndRedirect();
+    if(hasProfile)show('home');}
   else show('login');
 })();
 </script>
