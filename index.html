@@ -1162,9 +1162,7 @@ async function runPDF(type){
   const pageW=210,pageH=297;
   const today=new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'long',year:'numeric'});
 
-  // Cover page
   pdfCoverPage(doc,pageW,pageH,type,recs,projLabel,today);
-
   pdfHeader(doc,pageW,label+' Reports — '+projLabel,today);
   let y=22;
 
@@ -1176,7 +1174,6 @@ async function runPDF(type){
     y=drawRow(doc,r,imgData,y,pageW,pageH,type==='stock');
   }
 
-  // Page numbers
   const tot=doc.getNumberOfPages();
   for(let p=1;p<=tot;p++){
     doc.setPage(p);
@@ -1184,9 +1181,33 @@ async function runPDF(type){
     doc.text('CPC Site Reports — Confidential',12,pageH-5);
     doc.text('Page '+p+' / '+tot,pageW-12,pageH-5,'right');
   }
-  doc.save('CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+
+  const fname='CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+
+  // Try Web Share API — share directly (Android Chrome & iOS Safari 16.4+)
+  try{
+    const pdfBlob=doc.output('blob');
+    const file=new File([pdfBlob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      toast('Opening share sheet...',3000);
+      await navigator.share({
+        title:'CPC '+label+' Report',
+        text:'CPC Site Reports — '+projLabel,
+        files:[file]
+      });
+      toast(label+' PDF shared!');
+      return;
+    }
+  }catch(e){
+    if(e.name==='AbortError')return;
+    console.log('Share API not supported, downloading:',e);
+  }
+  // Fallback — download to device
+  doc.save(fname);
   toast(label+' PDF downloaded!');
 }
+
+
 const exportStockPDF=()=>runPDF('stock');
 const exportDailyPDF=()=>runPDF('daily');
 
