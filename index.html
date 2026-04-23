@@ -141,37 +141,6 @@ input[type=file]{display:none}
 </head>
 <body>
 
-<!-- PROFILE SETUP (first time login) -->
-<div class="screen login-wrap hidden" id="scr-profile-setup">
-  <div class="logo">
-    <img class="logo-img" src="icon-512.png" alt="CPC Logo">
-    <h2>Welcome to CPC!</h2>
-    <p>Please complete your profile to continue</p>
-  </div>
-  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rsm);padding:11px 14px;font-size:13px;color:#1e40af;line-height:1.5">
-    👋 This is a one-time setup. You won't be asked again.
-  </div>
-  <div class="fl"><div class="lbl">Full Name *</div>
-    <input class="inp" id="ps-name" placeholder="e.g. Ahmad Bin Ali">
-  </div>
-  <div class="fl"><div class="lbl">Role / Position *</div>
-    <select class="inp" id="ps-role">
-      <option value="">Select your role...</option>
-      <option>Site Supervisor</option>
-      <option>Safety Officer</option>
-      <option>Project Manager</option>
-      <option>Foreman</option>
-      <option>Engineer</option>
-      <option>Inspector</option>
-      <option>Storekeeper</option>
-      <option>Driver</option>
-      <option>Other</option>
-    </select>
-  </div>
-  <div class="err" id="ps-err"></div>
-  <button class="btn btn-gold" onclick="App.saveProfile()">Save &amp; Continue →</button>
-</div>
-
 <div id="app">
   <div class="install-banner" id="install-banner" style="display:none">
     <img src="icon-192.png" alt="CPC">
@@ -480,7 +449,7 @@ input[type=file]{display:none}
 let sb=null;
 function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
 
-const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[],projects:[],locations:[],editId:null,selectedProject:null};
+const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[],projects:[],locations:[],editId:null,selectedProject:null,editData:null};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value.trim():''};
 const ini=n=>n?n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2):'?';
