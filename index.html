@@ -580,7 +580,7 @@ async function loadHome(){
   if(!STATE.projects.length){
     projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
   } else {
-    projList.innerHTML=STATE.projects.map(proj=>{
+    projList.innerHTML=STATE.projects.map((proj,idx)=>{
       const pRecs=dailyRecs.filter(r=>r.project===proj.name);
       const total=pRecs.length;
       const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
