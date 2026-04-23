@@ -562,48 +562,44 @@ async function loadHome(){
   const p=STATE.profile||{};
   $('home-ini').textContent=ini(p.name);$('home-name').textContent=p.name||'-';$('home-role').textContent=p.role||'-';
   $('cnt-stock').textContent='...';$('cnt-daily').textContent='...';$('cnt-draft').textContent='...';
+  // Load counts and projects in parallel
+  const[{data:allRecs},{data:projs}]=await Promise.all([
+    sb.from('reports').select('type,status,project'),
+    sb.from('projects').select('*').eq('active',true).order('name')
+  ]);
+  STATE.projects=projs||[];
+  const all=allRecs||[];
+  const drafts=all.filter(r=>r.status==='draft').length;
+  $('cnt-stock').textContent=all.filter(r=>r.type==='stock'&&r.status!=='draft').length;
+  $('cnt-daily').textContent=all.filter(r=>r.type==='daily'&&r.status!=='draft').length;
+  $('cnt-draft').textContent=drafts;
+  $('draft-alert').style.display=drafts>0?'flex':'none';
+  // Build daily by project breakdown
   const projList=$('home-proj-list');
-  try{
-    // Load counts and projects in parallel
-    const[recRes,projRes]=await Promise.all([
-      sb.from('reports').select('type,status,project'),
-      sb.from('projects').select('*').eq('active',true).order('name')
-    ]);
-    STATE.projects=projRes.data||[];
-    const all=recRes.data||[];
-    const drafts=all.filter(r=>r.status==='draft').length;
-    $('cnt-stock').textContent=all.filter(r=>r.type==='stock'&&r.status!=='draft').length;
-    $('cnt-daily').textContent=all.filter(r=>r.type==='daily'&&r.status!=='draft').length;
-    $('cnt-draft').textContent=drafts;
-    $('draft-alert').style.display=drafts>0?'flex':'none';
-    // Build daily by project breakdown
-    const dailyRecs=all.filter(r=>r.type==='daily'&&r.status!=='draft');
-    if(!STATE.projects.length){
-      projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
-    } else {
-      const rows=STATE.projects.map((proj,pidx)=>{
-        const total=dailyRecs.filter(r=>r.project===proj.name).length;
-        const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
-        return '<button data-pidx="'+pidx+'" class="proj-home-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
-          '<div>'+
-          '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
-          '&#128203; '+total+' report'+(total!==1?'s':'')+
-          (incidents>0?' &nbsp;&#9888;&#65039; '+incidents+' incident'+(incidents!==1?'s':''):'')+'</div></div>'+
-          '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
+  const dailyRecs=all.filter(r=>r.type==='daily'&&r.status!=='draft');
+  if(!STATE.projects.length){
+    projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
+  } else {
+    projList.innerHTML=STATE.projects.map(proj=>{
+      const pRecs=dailyRecs.filter(r=>r.project===proj.name);
+      const total=pRecs.length;
+      const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
+      return '<button data-pidx="'+idx+'" class="proj-home-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+        '<div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
+        '&#128203; '+total+' report'+(total!==1?'s':'')+
+        (incidents>0?' &nbsp;&#9888;&#65039; '+incidents+' incident'+(incidents!==1?'s':''):'')+'</div></div>'+
+        '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
+    }).join('')+
+    (STATE.projects.length>0&&dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
+    // Attach click handlers safely
+    projList.querySelectorAll('.proj-home-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const idx=parseInt(btn.dataset.pidx);
+        goToProjectRecords(STATE.projects[idx].name);
       });
-      projList.innerHTML=rows.join('')+(dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
-      projList.querySelectorAll('.proj-home-btn').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          const pidx=parseInt(btn.dataset.pidx);
-          goToProjectRecords(STATE.projects[pidx].name);
-        });
-      });
-    }
-  } catch(e){
-    console.error('loadHome error:',e);
-    $('cnt-stock').textContent='0';$('cnt-daily').textContent='0';$('cnt-draft').textContent='0';
-    projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">Error loading — check SQL setup</div>';
+    });
   }
 }
 
@@ -784,8 +780,8 @@ async function uploadPhoto(prefix,existingUrl){
 // ── Save Draft ───────────────────────────────────────────
 async function saveDraft(prefix){
   const isS=prefix==='s';
-  // Draft is lenient — no required fields, save whatever is filled
-  const proj=getProjVal(prefix)||'(Draft - no project)';
+  const proj=getProjVal(prefix);
+  if(!proj){showErr(prefix+(isS?'s':'d')+'-err','Please select or enter a project name');return;}
   hideErr(prefix+(isS?'s':'d')+'-err');
   const btn=$(prefix+(isS?'s':'d')+'-draft-btn');btn.textContent='Saving...';btn.disabled=true;
   const photo_url=await uploadPhoto(prefix, STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null);
@@ -1251,13 +1247,12 @@ if('serviceWorker' in navigator){
 }
 
 async function loadProfileAndRedirect(){
-  const{data,error}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
-  if(error||!data){
-    STATE.profile=null;
+  const{data}=await sb.from('profiles').select('*').eq('id',STATE.user.id).single();
+  STATE.profile=data;
+  if(!data){
     show('profile-setup');
     return false;
   }
-  STATE.profile=data;
   return true;
 }
 
@@ -1286,95 +1281,7 @@ async function saveProfile(){
   show('home');
 }
 
-
-// ── Edit submitted report ─────────────────────────────────
-async function editRecord(id){
-  const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  STATE.editId=id;
-  document.getElementById('mod')?.remove();
-  const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);
-  show(r.type==='stock'?'stock':'daily');
-  await new Promise(res=>setTimeout(res,350));
-  if(r.type==='stock'){
-    $('s-behalf').value=r.on_behalf_of||'';
-    const pOpt=Array.from($('s-proj-sel').options).find(o=>o.value===r.project);
-    if(pOpt){$('s-proj-sel').value=r.project;}
-    else{$('s-proj-sel').value='__other__';$('s-proj-txt').value=r.project||'';$('s-proj-txt').classList.add('show');}
-    const fOpt=Array.from($('s-from-sel').options).find(o=>o.value===r.from_location);
-    if(fOpt){$('s-from-sel').value=r.from_location;}
-    else{$('s-from-sel').value='__other__';$('s-from-txt').value=r.from_location||'';$('s-from-txt').classList.add('show');}
-    const tOpt=Array.from($('s-to-sel').options).find(o=>o.value===r.to_location);
-    if(tOpt){$('s-to-sel').value=r.to_location;}
-    else{$('s-to-sel').value='__other__';$('s-to-txt').value=r.to_location||'';$('s-to-txt').classList.add('show');}
-    $('s-inst').value=r.instructed_by||'';
-    $('s-recv').value=r.received_by||'';
-    $('s-items').value=r.items||'';
-    $('s-qty').value=r.qty||'';
-  } else {
-    $('d-behalf').value=r.on_behalf_of||'';
-    const pOpt=Array.from($('d-proj-sel').options).find(o=>o.value===r.project);
-    if(pOpt){$('d-proj-sel').value=r.project;}
-    else{$('d-proj-sel').value='__other__';$('d-proj-txt').value=r.project||'';$('d-proj-txt').classList.add('show');}
-    $('d-type').value=r.report_type||'Daily Progress';
-    $('d-cont').value=r.contractor||'';
-    $('d-desc').value=r.description||'';
-    $('d-rem').value=r.remarks||'';
-  }
-  if(r.photo_url){
-    const pa=$(prefix+'-pa');
-    pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
-    pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
-  }
-  toast('Report loaded — edit and resubmit!');
-}
-
-// ── Share report via native share sheet ───────────────────────
-async function shareReport(id){
-  const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  const line='--------------------';
-  let text='';
-  if(r.type==='stock'){
-    text='[STOCK REPORT] CPC\n'+line+'\n'+
-      'Date: '+fmtDt(r.created_at)+'\n'+
-      'Project: '+r.project+'\n'+
-      'From: '+(r.from_location||'-')+'\n'+
-      'To: '+(r.to_location||'-')+'\n'+
-      'Instructed By: '+(r.instructed_by||'-')+'\n'+
-      'Received By: '+(r.received_by||'-')+'\n'+
-      'Items: '+(r.items||'-')+'\n'+
-      'Qty: '+(r.qty||'-')+'\n'+
-      'Submitted By: '+(r.submitted_by_name||'-')+'\n'+
-      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
-  } else {
-    text='[DAILY REPORT] CPC\n'+line+'\n'+
-      'Date: '+fmtDt(r.created_at)+'\n'+
-      'Project: '+r.project+'\n'+
-      'Type: '+(r.report_type||'-')+'\n'+
-      'Contractor: '+(r.contractor||'-')+'\n'+
-      'Description: '+(r.description||'-')+'\n'+
-      'Remarks: '+(r.remarks||'-')+'\n'+
-      'Submitted By: '+(r.submitted_by_name||'-')+'\n'+
-      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
-  }
-  if(navigator.share){
-    try{
-      await navigator.share({title:'CPC Site Report',text:text});
-    }catch(e){
-      if(e.name!=='AbortError')toast('Share failed');
-    }
-  } else {
-    try{
-      await navigator.clipboard.writeText(text);
-      toast('Report copied to clipboard! Paste into WhatsApp or Email.');
-    }catch(e){
-      toast('Share not supported — try on mobile');
-    }
-  }
-}
-
-
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
