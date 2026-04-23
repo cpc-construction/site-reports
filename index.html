@@ -785,7 +785,7 @@ async function saveDraft(prefix){
   // Draft is lenient - save whatever is filled, no required fields
   const proj=getProjVal(prefix)||'(Draft - no project)';
   hideErr(prefix+(isS?'s':'d')+'-err');
-  const btn=$(prefix+(isS?'s':'d')+'-draft-btn');btn.textContent='Saving...';btn.disabled=true;
+  const btn=$(prefix+'-draft-btn');btn.textContent='Saving...';btn.disabled=true;
   const photo_url=await uploadPhoto(prefix, STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null);
   const behalf=val(prefix+'-behalf')||STATE.profile?.name;
   let payload={type:isS?'stock':'daily',project:proj,status:'draft',
@@ -797,7 +797,7 @@ async function saveDraft(prefix){
   if(STATE.editId){({error}=await sb.from('reports').update(payload).eq('id',STATE.editId));}
   else{({error}=await sb.from('reports').insert(payload));}
   btn.textContent='&#9998; Save Draft';btn.disabled=false;
-  if(error){showErr(prefix+(isS?'s':'d')+'-err',error.message);return;}
+  if(error){showErr(prefix+'-err',error.message);return;}
   toast('Draft saved!');show('home');
 }
 
