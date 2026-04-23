@@ -699,10 +699,10 @@ async function initForm(prefix){
 // ── Load draft for editing ────────────────────────────────
 async function editDraft(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  STATE.editId=id;
   document.getElementById('mod')?.remove();
   const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);
+  await initForm(prefix);  // initForm resets editId to null, so set it AFTER
+  STATE.editId=id;
   show(r.type==='stock'?'stock':'daily');
   await new Promise(res=>setTimeout(res,350)); // wait for animation
   // Fill fields
@@ -1312,10 +1312,10 @@ async function saveProfile(){
 
 async function editRecord(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  STATE.editId=id;
   document.getElementById('mod')?.remove();
   const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);
+  await initForm(prefix);  // initForm resets editId to null, so set it AFTER
+  STATE.editId=id;
   show(r.type==='stock'?'stock':'daily');
   await new Promise(res=>setTimeout(res,350));
   if(r.type==='stock'){
