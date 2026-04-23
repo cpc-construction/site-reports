@@ -562,44 +562,48 @@ async function loadHome(){
   const p=STATE.profile||{};
   $('home-ini').textContent=ini(p.name);$('home-name').textContent=p.name||'-';$('home-role').textContent=p.role||'-';
   $('cnt-stock').textContent='...';$('cnt-daily').textContent='...';$('cnt-draft').textContent='...';
-  // Load counts and projects in parallel
-  const[{data:allRecs},{data:projs}]=await Promise.all([
-    sb.from('reports').select('type,status,project'),
-    sb.from('projects').select('*').eq('active',true).order('name')
-  ]);
-  STATE.projects=projs||[];
-  const all=allRecs||[];
-  const drafts=all.filter(r=>r.status==='draft').length;
-  $('cnt-stock').textContent=all.filter(r=>r.type==='stock'&&r.status!=='draft').length;
-  $('cnt-daily').textContent=all.filter(r=>r.type==='daily'&&r.status!=='draft').length;
-  $('cnt-draft').textContent=drafts;
-  $('draft-alert').style.display=drafts>0?'flex':'none';
-  // Build daily by project breakdown
   const projList=$('home-proj-list');
-  const dailyRecs=all.filter(r=>r.type==='daily'&&r.status!=='draft');
-  if(!STATE.projects.length){
-    projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
-  } else {
-    projList.innerHTML=STATE.projects.map((proj,idx)=>{
-      const pRecs=dailyRecs.filter(r=>r.project===proj.name);
-      const total=pRecs.length;
-      const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
-      return '<button data-pidx="'+idx+'" class="proj-home-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
-        '<div>'+
-        '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
-        '&#128203; '+total+' report'+(total!==1?'s':'')+
-        (incidents>0?' &nbsp;&#9888;&#65039; '+incidents+' incident'+(incidents!==1?'s':''):'')+'</div></div>'+
-        '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
-    }).join('')+
-    (STATE.projects.length>0&&dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
-    // Attach click handlers safely
-    projList.querySelectorAll('.proj-home-btn').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        const idx=parseInt(btn.dataset.pidx);
-        goToProjectRecords(STATE.projects[idx].name);
+  try{
+    // Load counts and projects in parallel
+    const[recRes,projRes]=await Promise.all([
+      sb.from('reports').select('type,status,project'),
+      sb.from('projects').select('*').eq('active',true).order('name')
+    ]);
+    STATE.projects=projRes.data||[];
+    const all=recRes.data||[];
+    const drafts=all.filter(r=>r.status==='draft').length;
+    $('cnt-stock').textContent=all.filter(r=>r.type==='stock'&&r.status!=='draft').length;
+    $('cnt-daily').textContent=all.filter(r=>r.type==='daily'&&r.status!=='draft').length;
+    $('cnt-draft').textContent=drafts;
+    $('draft-alert').style.display=drafts>0?'flex':'none';
+    // Build daily by project breakdown
+    const dailyRecs=all.filter(r=>r.type==='daily'&&r.status!=='draft');
+    if(!STATE.projects.length){
+      projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No projects yet — add in Manage Projects</div>';
+    } else {
+      const rows=STATE.projects.map((proj,pidx)=>{
+        const total=dailyRecs.filter(r=>r.project===proj.name).length;
+        const incidents=all.filter(r=>r.project===proj.name&&r.type==='daily'&&r.status!=='draft'&&r.report_type&&r.report_type.toLowerCase().includes('incident')).length;
+        return '<button data-pidx="'+pidx+'" class="proj-home-btn" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;padding:9px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+          '<div>'+
+          '<div style="font-size:13px;font-weight:700;color:var(--text)">&#127959; '+proj.name+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+
+          '&#128203; '+total+' report'+(total!==1?'s':'')+
+          (incidents>0?' &nbsp;&#9888;&#65039; '+incidents+' incident'+(incidents!==1?'s':''):'')+'</div></div>'+
+          '<span style="color:var(--hint);font-size:18px">&#8250;</span></button>';
       });
-    });
+      projList.innerHTML=rows.join('')+(dailyRecs.length===0?'<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">No daily reports yet</div>':'');
+      projList.querySelectorAll('.proj-home-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const pidx=parseInt(btn.dataset.pidx);
+          goToProjectRecords(STATE.projects[pidx].name);
+        });
+      });
+    }
+  } catch(e){
+    console.error('loadHome error:',e);
+    $('cnt-stock').textContent='0';$('cnt-daily').textContent='0';$('cnt-draft').textContent='0';
+    projList.innerHTML='<div style="font-size:12px;color:var(--hint);text-align:center;padding:8px 0">Error loading — check SQL setup</div>';
   }
 }
 
