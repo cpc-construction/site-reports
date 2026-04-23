@@ -504,8 +504,8 @@ function show(scr){
   STATE.screen=scr;updateHdr(scr);
   if(scr==='home')loadHome();
   if(scr==='records'){STATE.editId=null;loadRecords();}
-  if(scr==='stock')initForm('s');
-  if(scr==='daily')initForm('d');
+  if(scr==='stock'){STATE.editId=null;initForm('s');}
+  if(scr==='daily'){STATE.editId=null;initForm('d');}
   if(scr==='projects')loadProjects();
   if(scr==='pick-project')loadPickProject();
   if(scr==='daily'&&STATE.selectedProject){
@@ -668,7 +668,7 @@ async function deleteProject(id){
 
 // ── Forms ────────────────────────────────────────────────
 async function initForm(prefix){
-  STATE.photoFile[prefix]=null;STATE.editId=null;
+  STATE.photoFile[prefix]=null;// editId managed by caller
   await loadProjectsData();
   const p=STATE.profile||{};
   const isS=prefix==='s';
@@ -701,9 +701,17 @@ async function editDraft(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   document.getElementById('mod')?.remove();
   const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);  // initForm resets editId to null, so set it AFTER
-  STATE.editId=id;
-  show(r.type==='stock'?'stock':'daily');
+  STATE.editId=id; // set before initForm
+  await initForm(prefix); // initForm no longer resets editId
+  // Switch screen without resetting editId
+  const targetScr=r.type==='stock'?'stock':'daily';
+  const cur=STATE.screen;
+  const curEl=$('scr-'+cur);
+  if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
+  const newEl=$('scr-'+targetScr);
+  if(newEl){newEl.classList.remove('hidden');newEl.style.transform='translateX(100%)';newEl.style.opacity='0';
+    requestAnimationFrame(()=>{newEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';newEl.style.transform='';newEl.style.opacity='';setTimeout(()=>newEl.style.transition='',300);});}
+  STATE.screen=targetScr;updateHdr(targetScr);
   await new Promise(res=>setTimeout(res,350)); // wait for animation
   // Fill fields
   if(r.type==='stock'){
@@ -785,7 +793,7 @@ async function saveDraft(prefix){
   // Draft is lenient - save whatever is filled, no required fields
   const proj=getProjVal(prefix)||'(Draft - no project)';
   hideErr(prefix+(isS?'s':'d')+'-err');
-  const btn=$(prefix+'-draft-btn');btn.textContent='Saving...';btn.disabled=true;
+  const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
   const photo_url=await uploadPhoto(prefix, STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null);
   const behalf=val(prefix+'-behalf')||STATE.profile?.name;
   let payload={type:isS?'stock':'daily',project:proj,status:'draft',
@@ -796,7 +804,7 @@ async function saveDraft(prefix){
   let error;
   if(STATE.editId){({error}=await sb.from('reports').update(payload).eq('id',STATE.editId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.textContent='&#9998; Save Draft';btn.disabled=false;
+  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
   if(error){showErr(prefix+'-err',error.message);return;}
   toast('Draft saved!');show('home');
 }
@@ -819,7 +827,7 @@ async function submitStock(){
   let error;
   if(STATE.editId){({error}=await sb.from('reports').update(payload).eq('id',STATE.editId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.textContent='&#10003; Submit';btn.disabled=false;
+  btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
   // Save new location if custom
 
@@ -843,7 +851,7 @@ async function submitDaily(){
   let error;
   if(STATE.editId){({error}=await sb.from('reports').update(payload).eq('id',STATE.editId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.textContent='&#10003; Submit';btn.disabled=false;
+  btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
   toast('Daily report saved!');show('home');
 }
@@ -1314,9 +1322,17 @@ async function editRecord(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   document.getElementById('mod')?.remove();
   const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);  // initForm resets editId to null, so set it AFTER
-  STATE.editId=id;
-  show(r.type==='stock'?'stock':'daily');
+  STATE.editId=id; // set before initForm
+  await initForm(prefix); // initForm no longer resets editId
+  // Switch screen without resetting editId
+  const targetScr=r.type==='stock'?'stock':'daily';
+  const cur=STATE.screen;
+  const curEl=$('scr-'+cur);
+  if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
+  const newEl=$('scr-'+targetScr);
+  if(newEl){newEl.classList.remove('hidden');newEl.style.transform='translateX(100%)';newEl.style.opacity='0';
+    requestAnimationFrame(()=>{newEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';newEl.style.transform='';newEl.style.opacity='';setTimeout(()=>newEl.style.transition='',300);});}
+  STATE.screen=targetScr;updateHdr(targetScr);
   await new Promise(res=>setTimeout(res,350));
   if(r.type==='stock'){
     $('s-behalf').value=r.on_behalf_of||'';
