@@ -473,8 +473,8 @@ function show(scr){
   STATE.screen=scr;updateHdr(scr);
   if(scr==='home')loadHome();
   if(scr==='records'){STATE.editId=null;loadRecords();}
-  if(scr==='stock')initForm('s');
-  if(scr==='daily')initForm('d');
+  if(scr==='stock'){STATE.editId=null;initForm('s');}
+  if(scr==='daily'){STATE.editId=null;initForm('d');}
   if(scr==='projects')loadProjects();
   if(scr==='pick-project')loadPickProject();
   if(scr==='daily'&&STATE.selectedProject){
@@ -637,7 +637,7 @@ async function deleteProject(id){
 
 // ── Forms ────────────────────────────────────────────────
 async function initForm(prefix){
-  STATE.photoFile[prefix]=null;STATE.editId=null;
+  STATE.photoFile[prefix]=null;// editId preserved for edit flow
   await loadProjectsData();
   const p=STATE.profile||{};
   const isS=prefix==='s';
@@ -805,7 +805,7 @@ async function submitStock(){
   if(error){showErr('s-err',error.message);return;}
   // Save new location if custom
 
-  toast('Stock report saved!');show('home');
+  toast('Stock report saved!');STATE.editId=null;show('home');
 }
 
 // ── Submit Daily ─────────────────────────────────────────
@@ -827,7 +827,7 @@ async function submitDaily(){
   else{({error}=await sb.from('reports').insert(payload));}
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
-  toast('Daily report saved!');show('home');
+  toast('Daily report saved!');STATE.editId=null;show('home');
 }
 
 // ── Records ──────────────────────────────────────────────
