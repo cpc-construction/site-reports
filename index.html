@@ -324,10 +324,11 @@ input[type=file]{display:none}
         </div>
       </div>
       <div class="err" id="s-err"></div>
-      <input type="hidden" id="s-edit-id" value="">
-      <input type="hidden" id="s-edit-photo" value="">
       <hr class="div">
-      <button class="btn btn-green" id="s-btn" onclick="App.confirmSubmit('s')">&#10003; Submit / Save Draft</button>
+      <div class="r2">
+        <button class="btn btn-amber" id="s-draft-btn" onclick="App.saveDraft('s')">&#9998; Save Draft</button>
+        <button class="btn btn-green" id="s-btn" onclick="App.confirmSubmit('s')">&#10003; Submit</button>
+      </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
@@ -374,10 +375,11 @@ input[type=file]{display:none}
         </div>
       </div>
       <div class="err" id="d-err"></div>
-      <input type="hidden" id="d-edit-id" value="">
-      <input type="hidden" id="d-edit-photo" value="">
       <hr class="div">
-      <button class="btn btn-green" id="d-btn" onclick="App.confirmSubmit('d')">&#10003; Submit / Save Draft</button>
+      <div class="r2">
+        <button class="btn btn-amber" id="d-draft-btn" onclick="App.saveDraft('d')">&#9998; Save Draft</button>
+        <button class="btn btn-green" id="d-btn" onclick="App.confirmSubmit('d')">&#10003; Submit</button>
+      </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
@@ -633,7 +635,7 @@ async function deleteProject(id){
 
 // ── Forms ────────────────────────────────────────────────
 async function initForm(prefix){
-  STATE.photoFile[prefix]=null;STATE.editId=null;
+  STATE.photoFile[prefix]=null;// editId managed by editDraft
   await loadProjectsData();
   const p=STATE.profile||{};
   const isS=prefix==='s';
@@ -666,36 +668,16 @@ async function editDraft(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   document.getElementById('mod')?.remove();
   const prefix=r.type==='stock'?'s':'d';
-  const isS=prefix==='s';
-  // Switch screen manually without calling show() to avoid initForm resetting things
-  const cur=STATE.screen;
-  const curEl=$('scr-'+cur);
-  if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
-  const newEl=$('scr-'+prefix==='s'?'scr-stock':'scr-daily');
-  const targetEl=$('scr-'+(isS?'stock':'daily'));
-  if(targetEl){targetEl.classList.remove('hidden');targetEl.style.transform='translateX(100%)';targetEl.style.opacity='0';
-    requestAnimationFrame(()=>{targetEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';targetEl.style.transform='';targetEl.style.opacity='';setTimeout(()=>targetEl.style.transition='',300);});}
-  STATE.screen=isS?'stock':'daily';updateHdr(STATE.screen);
-  // Load projects
-  await loadProjectsData();
-  populateProjSelect(prefix);
-  if(isS)populateLocSelects();
-  // Reset photo
-  STATE.photoFile[prefix]=null;
-  resetPhoto(prefix);setupPhotoZone(prefix);
-  // Set user info
-  const p=STATE.profile||{};
-  $(prefix+(isS?'tock':'aily')+'-ini').textContent=ini(p.name);
-  $(prefix+(isS?'tock':'aily')+'-name').textContent=p.name||'-';
-  $(prefix+(isS?'tock':'aily')+'-ts').textContent='Date: '+nowStr();
-  // IMPORTANT: Set hidden input FIRST so submit/draft can read it
-  $('s-edit-id')?$('s-edit-id').value='':'';
-  $('d-edit-id')?$('d-edit-id').value='':'';
-  $(prefix+'-edit-id').value=String(id);
-  $(prefix+'-edit-photo').value=r.photo_url||'';
-  console.log('editDraft: set',prefix+'-edit-id','=',$(prefix+'-edit-id').value);
+  await initForm(prefix);
+  // Set STATE.editId AFTER initForm (initForm resets it to null)
+  STATE.editId=id;
+  show(r.type==='stock'?'stock':'daily');
+  await new Promise(res=>setTimeout(res,350));
+  // STATE.editId must survive show() — show() calls initForm for stock/daily
+  // so we set it again after the delay
+  STATE.editId=id;
   // Fill fields
-  if(isS){
+  if(r.type==='stock'){
     $('s-behalf').value=r.on_behalf_of||'';
     const pOpt=Array.from($('s-proj-sel').options).find(o=>o.value===r.project);
     if(pOpt){$('s-proj-sel').value=r.project;}else{$('s-proj-sel').value='__other__';$('s-proj-txt').value=r.project||'';$('s-proj-txt').classList.add('show');}
@@ -705,14 +687,12 @@ async function editDraft(id){
     if(tOpt){$('s-to-sel').value=r.to_location;}else{$('s-to-sel').value='__other__';$('s-to-txt').value=r.to_location||'';$('s-to-txt').classList.add('show');}
     $('s-inst').value=r.instructed_by||'';$('s-recv').value=r.received_by||'';
     $('s-items').value=r.items||'';$('s-qty').value=r.qty||'';
-    hideErr('s-err');
-  }else{
+  } else {
     $('d-behalf').value=r.on_behalf_of||'';
     const pOpt=Array.from($('d-proj-sel').options).find(o=>o.value===r.project);
     if(pOpt){$('d-proj-sel').value=r.project;}else{$('d-proj-sel').value='__other__';$('d-proj-txt').value=r.project||'';$('d-proj-txt').classList.add('show');}
     $('d-type').value=r.report_type||'Daily Progress';
     $('d-cont').value=r.contractor||'';$('d-desc').value=r.description||'';$('d-rem').value=r.remarks||'';
-    hideErr('d-err');
   }
   if(r.photo_url){
     const pa=$(prefix+'-pa');
@@ -899,13 +879,9 @@ function viewRec(id){
     (r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;margin-bottom:12px;display:block">':'<div style="background:#f5f8fc;border-radius:8px;height:50px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:12px">No photo attached</div>')+
     rows+
     '<div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">'+
-    (isDraft?
-      '<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editDraft(\''+r.id+'\')">&#9998; Edit &amp; Submit</button>':
-      '<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editRecord(\''+r.id+'\')">&#9998; Edit</button>'
-    )+
-    '<button class="btn btn-navy btn-sm" style="flex:1" onclick="App.shareReport(\''+r.id+'\')">&#8594; Share</button>'+
+    (isDraft?'<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editDraft(\''+r.id+'\')">&#9998; Edit &amp; Submit</button>':'')+''+
     (canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+
-    '<button class="btn btn-ghost btn-sm" style="flex:1;margin-top:4px" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
+    '<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
   document.body.appendChild(m);
 }
 async function deleteRec(id){
@@ -1171,17 +1147,8 @@ async function runPDF(type){
     doc.text('CPC Site Reports — Confidential',12,pageH-5);
     doc.text('Page '+p+' / '+tot,pageW-12,pageH-5,'right');
   }
-  const fname='CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf';
-  try{
-    const pdfBlob=doc.output('blob');
-    const file=new File([pdfBlob],fname,{type:'application/pdf'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      toast('Opening share sheet...',3000);
-      await navigator.share({title:'CPC '+label+' Report',text:'CPC Site Reports',files:[file]});
-      toast(label+' PDF shared!');return;
-    }
-  }catch(e){if(e.name==='AbortError')return;console.log('Share:',e);}
-  doc.save(fname);toast(label+' PDF downloaded!');
+  doc.save('CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast(label+' PDF downloaded!');
 }
 const exportStockPDF=()=>runPDF('stock');
 const exportDailyPDF=()=>runPDF('daily');
@@ -1280,185 +1247,13 @@ async function saveProfile(){
 }
 
 
-// ── Confirm Popup ─────────────────────────────────────────
+// ── Confirm Submit ────────────────────────────────────────
 function confirmSubmit(prefix){
-  document.getElementById('confirm-popup')?.remove();
-  const editId=$(prefix+'-edit-id')?$(prefix+'-edit-id').value:'';
-  console.log('confirmSubmit: prefix='+prefix+' editId='+editId);
-  const popup=document.createElement('div');
-  popup.id='confirm-popup';
-  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s';
-  const inner=document.createElement('div');
-  inner.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:24px 18px calc(24px + env(safe-area-inset-bottom,0));width:100%;max-width:430px;animation:slideup .25s cubic-bezier(.4,0,.2,1)';
-  inner.innerHTML='<h3 style="font-size:15px;font-weight:800;margin-bottom:6px">'+(editId?'Update Report':'Save Report')+'</h3><p style="font-size:13px;color:#5a6a7e;margin-bottom:18px">Choose what to do with this report</p>';
-  const draftBtn=document.createElement('button');
-  draftBtn.style.cssText='width:100%;padding:13px;background:#d97706;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;display:block';
-  draftBtn.innerHTML='&#9998; Save as Draft';
-  draftBtn.onclick=()=>App.doSaveDraft(prefix);
-  const submitBtn=document.createElement('button');
-  submitBtn.style.cssText='width:100%;padding:13px;background:#0a7c4e;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;display:block';
-  submitBtn.innerHTML='&#10003; Submit Report';
-  submitBtn.onclick=()=>App.doSubmit(prefix);
-  const cancelBtn=document.createElement('button');
-  cancelBtn.style.cssText='width:100%;padding:11px;background:transparent;color:#5a6a7e;border:1.5px solid #d5dce8;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;display:block';
-  cancelBtn.innerHTML='Cancel';
-  cancelBtn.onclick=()=>popup.remove();
-  inner.appendChild(draftBtn);inner.appendChild(submitBtn);inner.appendChild(cancelBtn);
-  popup.appendChild(inner);
-  document.body.appendChild(popup);
-  popup.addEventListener('click',e=>{if(e.target===popup)popup.remove();});
+  if(prefix==='s') submitStock();
+  else submitDaily();
 }
 
-async function doSaveDraft(prefix){
-  document.getElementById('confirm-popup')?.remove();
-  const isS=prefix==='s';
-  const editId=$(prefix+'-edit-id').value||'';
-  const existPhoto=$(prefix+'-edit-photo').value||'';
-  console.log('doSaveDraft: editId='+editId);
-  const btn=$(prefix+'-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const proj=getProjVal(prefix)||'(Draft - no project)';
-  const photo_url=await uploadPhoto(prefix,existPhoto||null);
-  const behalf=val(prefix+'-behalf')||STATE.profile?.name;
-  let payload={type:isS?'stock':'daily',project:proj,status:'draft',
-    submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
-  if(isS){Object.assign(payload,{from_location:getLocVal('s-from'),to_location:getLocVal('s-to'),
-    instructed_by:val('s-inst'),received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});}
-  else{Object.assign(payload,{report_type:val('d-type'),contractor:val('d-cont'),
-    description:val('d-desc'),remarks:val('d-rem')});}
-  let error;
-  if(editId){
-    console.log('doSaveDraft: updating id='+editId);
-    ({error}=await sb.from('reports').update(payload).eq('id',editId));
-  }else{
-    console.log('doSaveDraft: inserting new');
-    ({error}=await sb.from('reports').insert(payload));
-  }
-  btn.innerHTML='&#10003; Submit / Save Draft';btn.disabled=false;
-  if(error){showErr(prefix+'-err',error.message);return;}
-  $(prefix+'-edit-id').value='';$(prefix+'-edit-photo').value='';
-  toast('Draft saved!');show('home');
-}
-
-async function doSubmit(prefix){
-  document.getElementById('confirm-popup')?.remove();
-  const isS=prefix==='s';
-  const editId=$(prefix+'-edit-id').value||'';
-  const existPhoto=$(prefix+'-edit-photo').value||'';
-  console.log('doSubmit: editId='+editId);
-  if(isS){
-    const proj=getProjVal('s'),from=getLocVal('s-from'),to=getLocVal('s-to'),inst=val('s-inst');
-    if(!proj||!from||!to||!inst){showErr('s-err','Please fill all required fields (*)');return;}
-    hideErr('s-err');
-  }else{
-    const proj=getProjVal('d'),cont=val('d-cont'),desc=val('d-desc');
-    if(!proj||!cont||!desc){showErr('d-err','Fill Project, Contractor and Description (*)');return;}
-    hideErr('d-err');
-  }
-  const btn=$(prefix+'-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const photo_url=await uploadPhoto(prefix,existPhoto||null);
-  const behalf=val(prefix+'-behalf')||STATE.profile?.name;
-  let payload={type:isS?'stock':'daily',status:'submitted',
-    submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
-  if(isS){Object.assign(payload,{project:getProjVal('s'),from_location:getLocVal('s-from'),
-    to_location:getLocVal('s-to'),instructed_by:val('s-inst'),
-    received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});}
-  else{Object.assign(payload,{project:getProjVal('d'),report_type:val('d-type'),
-    contractor:val('d-cont'),description:val('d-desc'),remarks:val('d-rem')});}
-  let error;
-  if(editId){
-    console.log('doSubmit: updating id='+editId);
-    ({error}=await sb.from('reports').update(payload).eq('id',editId));
-  }else{
-    console.log('doSubmit: inserting new');
-    ({error}=await sb.from('reports').insert(payload));
-  }
-  btn.innerHTML='&#10003; Submit / Save Draft';btn.disabled=false;
-  if(error){showErr(prefix+'-err',error.message);return;}
-  $(prefix+'-edit-id').value='';$(prefix+'-edit-photo').value='';
-  toast(isS?'Stock report submitted!':'Daily report submitted!');
-  show('home');
-}
-
-async function editRecord(id){
-  const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  document.getElementById('mod')?.remove();
-  const prefix=r.type==='stock'?'s':'d';
-  const isS=prefix==='s';
-  const cur=STATE.screen;
-  const curEl=$('scr-'+cur);
-  if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
-  const targetEl=$('scr-'+(isS?'stock':'daily'));
-  if(targetEl){targetEl.classList.remove('hidden');targetEl.style.transform='translateX(100%)';targetEl.style.opacity='0';
-    requestAnimationFrame(()=>{targetEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';targetEl.style.transform='';targetEl.style.opacity='';setTimeout(()=>targetEl.style.transition='',300);});}
-  STATE.screen=isS?'stock':'daily';updateHdr(STATE.screen);
-  await loadProjectsData();
-  populateProjSelect(prefix);if(isS)populateLocSelects();
-  STATE.photoFile[prefix]=null;resetPhoto(prefix);setupPhotoZone(prefix);
-  const p=STATE.profile||{};
-  $(prefix+(isS?'tock':'aily')+'-ini').textContent=ini(p.name);
-  $(prefix+(isS?'tock':'aily')+'-name').textContent=p.name||'-';
-  $(prefix+(isS?'tock':'aily')+'-ts').textContent='Date: '+nowStr();
-  $(prefix+'-edit-id').value=String(id);
-  $(prefix+'-edit-photo').value=r.photo_url||'';
-  if(isS){
-    $('s-behalf').value=r.on_behalf_of||'';
-    const pOpt=Array.from($('s-proj-sel').options).find(o=>o.value===r.project);
-    if(pOpt){$('s-proj-sel').value=r.project;}else{$('s-proj-sel').value='__other__';$('s-proj-txt').value=r.project||'';$('s-proj-txt').classList.add('show');}
-    const fOpt=Array.from($('s-from-sel').options).find(o=>o.value===r.from_location);
-    if(fOpt){$('s-from-sel').value=r.from_location;}else{$('s-from-sel').value='__other__';$('s-from-txt').value=r.from_location||'';$('s-from-txt').classList.add('show');}
-    const tOpt=Array.from($('s-to-sel').options).find(o=>o.value===r.to_location);
-    if(tOpt){$('s-to-sel').value=r.to_location;}else{$('s-to-sel').value='__other__';$('s-to-txt').value=r.to_location||'';$('s-to-txt').classList.add('show');}
-    $('s-inst').value=r.instructed_by||'';$('s-recv').value=r.received_by||'';
-    $('s-items').value=r.items||'';$('s-qty').value=r.qty||'';
-    hideErr('s-err');
-  }else{
-    $('d-behalf').value=r.on_behalf_of||'';
-    const pOpt=Array.from($('d-proj-sel').options).find(o=>o.value===r.project);
-    if(pOpt){$('d-proj-sel').value=r.project;}else{$('d-proj-sel').value='__other__';$('d-proj-txt').value=r.project||'';$('d-proj-txt').classList.add('show');}
-    $('d-type').value=r.report_type||'Daily Progress';
-    $('d-cont').value=r.contractor||'';$('d-desc').value=r.description||'';$('d-rem').value=r.remarks||'';
-    hideErr('d-err');
-  }
-  if(r.photo_url){
-    const pa=$(prefix+'-pa');
-    pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
-    pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
-  }
-  toast('Report loaded — edit and resubmit!');
-}
-
-async function shareReport(id){
-  const r=STATE.records.find(x=>x.id===id);if(!r)return;
-  const nl='\n',line='--------------------';
-  let text='';
-  if(r.type==='stock'){
-    text='[STOCK REPORT] CPC'+nl+line+nl+
-      'Date: '+fmtDt(r.created_at)+nl+'Project: '+r.project+nl+
-      'From: '+(r.from_location||'-')+nl+'To: '+(r.to_location||'-')+nl+
-      'Instructed By: '+(r.instructed_by||'-')+nl+'Received By: '+(r.received_by||'-')+nl+
-      'Items: '+(r.items||'-')+nl+'Qty: '+(r.qty||'-')+nl+
-      'Submitted By: '+(r.submitted_by_name||'-')+nl+
-      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
-  }else{
-    text='[DAILY REPORT] CPC'+nl+line+nl+
-      'Date: '+fmtDt(r.created_at)+nl+'Project: '+r.project+nl+
-      'Type: '+(r.report_type||'-')+nl+'Contractor: '+(r.contractor||'-')+nl+
-      'Description: '+(r.description||'-')+nl+'Remarks: '+(r.remarks||'-')+nl+
-      'Submitted By: '+(r.submitted_by_name||'-')+nl+
-      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
-  }
-  if(navigator.share){
-    try{await navigator.share({title:'CPC Site Report',text:text});}
-    catch(e){if(e.name!=='AbortError')toast('Share failed');}
-  }else{
-    try{await navigator.clipboard.writeText(text);toast('Copied to clipboard!');}
-    catch(e){toast('Share not supported on this browser');}
-  }
-}
-
-const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,doSaveDraft,doSubmit,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
