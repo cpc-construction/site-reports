@@ -473,8 +473,8 @@ function show(scr){
   STATE.screen=scr;updateHdr(scr);
   if(scr==='home')loadHome();
   if(scr==='records'){STATE.editId=null;loadRecords();}
-  if(scr==='stock')initForm('s');
-  if(scr==='daily')initForm('d');
+  if(scr==='stock'&&!STATE.editId)initForm('s');
+  if(scr==='daily'&&!STATE.editId)initForm('d');
   if(scr==='projects')loadProjects();
   if(scr==='pick-project')loadPickProject();
   if(scr==='daily'&&STATE.selectedProject){
