@@ -324,6 +324,7 @@ input[type=file]{display:none}
         </div>
       </div>
       <input type="hidden" id="s-edit-id" value="">
+      <input type="hidden" id="s-edit-photo" value="">
       <div class="err" id="s-err"></div>
       <hr class="div">
       <div class="r2">
@@ -376,6 +377,7 @@ input[type=file]{display:none}
         </div>
       </div>
       <input type="hidden" id="d-edit-id" value="">
+      <input type="hidden" id="d-edit-photo" value="">
       <div class="err" id="d-err"></div>
       <hr class="div">
       <div class="r2">
@@ -642,6 +644,7 @@ async function initForm(prefix){
   STATE.photoFile[prefix]=null;
   // Clear hidden edit ID input for fresh form
   const eiEl=$(prefix+'-edit-id');if(eiEl)eiEl.value='';
+  const epEl=$(prefix+'-edit-photo');if(epEl)epEl.value='';
   await loadProjectsData();
   const p=STATE.profile||{};
   const isS=prefix==='s';
@@ -719,8 +722,9 @@ async function editDraft(id){
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   }
-  // Store edit ID in hidden input so submit/draft functions can use it reliably
+  // Store edit ID and photo URL in hidden inputs
   if($(prefix+'-edit-id'))$(prefix+'-edit-id').value=id;
+  if($(prefix+'-edit-photo'))$(prefix+'-edit-photo').value=r.photo_url||'';
   toast('Draft loaded — edit and submit!');
 }
 
@@ -776,7 +780,7 @@ async function saveDraft(prefix){
   const editIdEl=$(prefix+'-edit-id');
   const editId=editIdEl?editIdEl.value:'';
   const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const existUrl=editId?(STATE.records.find(r=>r.id==editId)?.photo_url):null;
+  const existUrl=editId?($(prefix+'-edit-photo')?.value||null):null;
   const photo_url=await uploadPhoto(prefix,existUrl);
   const behalf=val(prefix+'-behalf')||STATE.profile?.name;
   let payload={type:isS?'stock':'daily',project:proj,status:'draft',
@@ -799,7 +803,7 @@ async function submitStock(){
   hideErr('s-err');
   const editId=$('s-edit-id')?$('s-edit-id').value:'';
   const btn=$('s-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const existUrl=editId?(STATE.records.find(r=>r.id==editId)?.photo_url):null;
+  const existUrl=editId?($('s-edit-photo')?.value||null):null;
   const photo_url=await uploadPhoto('s',existUrl);
   const behalf=val('s-behalf')||STATE.profile?.name;
   const payload={type:'stock',project:proj,status:'submitted',
@@ -814,6 +818,7 @@ async function submitStock(){
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
   if($('s-edit-id'))$('s-edit-id').value='';
+  if($('s-edit-photo'))$('s-edit-photo').value='';
   toast('Stock report saved!');show('home');
 }
 
@@ -824,7 +829,7 @@ async function submitDaily(){
   hideErr('d-err');
   const editId=$('d-edit-id')?$('d-edit-id').value:'';
   const btn=$('d-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const existUrl=editId?(STATE.records.find(r=>r.id==editId)?.photo_url):null;
+  const existUrl=editId?($('d-edit-photo')?.value||null):null;
   const photo_url=await uploadPhoto('d',existUrl);
   const behalf=val('d-behalf')||STATE.profile?.name;
   const payload={type:'daily',project:proj,status:'submitted',
@@ -838,6 +843,7 @@ async function submitDaily(){
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
   if($('d-edit-id'))$('d-edit-id').value='';
+  if($('d-edit-photo'))$('d-edit-photo').value='';
   toast('Daily report saved!');show('home');
 }
 
@@ -1337,8 +1343,9 @@ async function editRecord(id){
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   }
-  // Store edit ID in hidden input
+  // Store edit ID and photo URL in hidden inputs
   if($(prefix+'-edit-id'))$(prefix+'-edit-id').value=id;
+  if($(prefix+'-edit-photo'))$(prefix+'-edit-photo').value=r.photo_url||'';
   toast('Report loaded — edit and resubmit!');
 }
 
