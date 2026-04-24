@@ -327,10 +327,7 @@ input[type=file]{display:none}
       <input type="hidden" id="s-edit-photo" value="">
       <div class="err" id="s-err"></div>
       <hr class="div">
-      <div class="r2">
-        <button class="btn btn-amber" id="s-draft-btn" onclick="App.saveDraft('s')">&#9998; Save Draft</button>
-        <button class="btn btn-green" id="s-btn" onclick="App.submitStock()">&#10003; Submit</button>
-      </div>
+      <button class="btn btn-green" id="s-btn" onclick="App.confirmSubmit('s')">&#10003; Submit / Save Draft</button>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
@@ -380,10 +377,7 @@ input[type=file]{display:none}
       <input type="hidden" id="d-edit-photo" value="">
       <div class="err" id="d-err"></div>
       <hr class="div">
-      <div class="r2">
-        <button class="btn btn-amber" id="d-draft-btn" onclick="App.saveDraft('d')">&#9998; Save Draft</button>
-        <button class="btn btn-green" id="d-btn" onclick="App.submitDaily()">&#10003; Submit</button>
-      </div>
+      <button class="btn btn-green" id="d-btn" onclick="App.confirmSubmit('d')">&#10003; Submit / Save Draft</button>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
 
@@ -1379,7 +1373,108 @@ async function shareReport(id){
   }
 }
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,submitStock,submitDaily,saveDraft,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
+
+// ── Confirm Submit Popup ──────────────────────────────────
+function confirmSubmit(prefix){
+  // Remove any existing popup
+  document.getElementById('confirm-popup')?.remove();
+  const isS=prefix==='s';
+  const editId=$(prefix+'-edit-id')?$(prefix+'-edit-id').value:'';
+  const popup=document.createElement('div');
+  popup.id='confirm-popup';
+  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s';
+  const inner=document.createElement('div');
+  inner.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:24px 18px calc(24px + env(safe-area-inset-bottom,0));width:100%;max-width:430px;animation:slideup .25s cubic-bezier(.4,0,.2,1)';
+  inner.innerHTML=
+    '<h3 style="font-size:15px;font-weight:800;margin-bottom:6px">Save or Submit?</h3>'+
+    '<p style="font-size:13px;color:#5a6a7e;margin-bottom:18px">Choose what to do with this report</p>';
+  const draftBtn=document.createElement('button');
+  draftBtn.style.cssText='width:100%;padding:13px;background:#d97706;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;display:block';
+  draftBtn.innerHTML='&#9998; Save as Draft';
+  draftBtn.onclick=()=>App.doSaveDraft(prefix);
+  const submitBtn=document.createElement('button');
+  submitBtn.style.cssText='width:100%;padding:13px;background:#0a7c4e;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;display:block';
+  submitBtn.innerHTML='&#10003; Submit Report';
+  submitBtn.onclick=()=>App.doSubmit(prefix);
+  const cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='width:100%;padding:11px;background:transparent;color:#5a6a7e;border:1.5px solid #d5dce8;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;display:block';
+  cancelBtn.innerHTML='Cancel';
+  cancelBtn.onclick=()=>popup.remove();
+  inner.appendChild(draftBtn);inner.appendChild(submitBtn);inner.appendChild(cancelBtn);
+  popup.appendChild(inner);
+  document.body.appendChild(popup);
+  popup.addEventListener('click',e=>{if(e.target===popup)popup.remove();});
+}
+
+
+// ── Do Save Draft ─────────────────────────────────────────
+async function doSaveDraft(prefix){
+  document.getElementById('confirm-popup')?.remove();
+  const isS=prefix==='s';
+  const proj=getProjVal(prefix)||'(Draft - no project)';
+  const editId=$(prefix+'-edit-id')?$(prefix+'-edit-id').value:'';
+  const btn=$(prefix+'-btn');btn.innerHTML='Saving...';btn.disabled=true;
+  const existPhoto=$(prefix+'-edit-photo')?$(prefix+'-edit-photo').value:'';
+  const photo_url=await uploadPhoto(prefix,existPhoto||null);
+  const behalf=val(prefix+'-behalf')||STATE.profile?.name;
+  let payload={type:isS?'stock':'daily',project:proj,status:'draft',
+    submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
+    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
+  if(isS){Object.assign(payload,{from_location:getLocVal('s-from'),to_location:getLocVal('s-to'),
+    instructed_by:val('s-inst'),received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});}
+  else{Object.assign(payload,{report_type:val('d-type'),contractor:val('d-cont'),
+    description:val('d-desc'),remarks:val('d-rem')});}
+  let error;
+  if(editId){({error}=await sb.from('reports').update(payload).eq('id',editId));}
+  else{({error}=await sb.from('reports').insert(payload));}
+  btn.innerHTML='&#10003; Submit / Save Draft';btn.disabled=false;
+  if(error){showErr(prefix+'-err',error.message);return;}
+  toast('Draft saved!');show('home');
+}
+
+// ── Do Submit ─────────────────────────────────────────────
+async function doSubmit(prefix){
+  document.getElementById('confirm-popup')?.remove();
+  const isS=prefix==='s';
+  // Validate required fields
+  if(isS){
+    const proj=getProjVal('s'),from=getLocVal('s-from'),to=getLocVal('s-to'),inst=val('s-inst');
+    if(!proj||!from||!to||!inst){showErr('s-err','Please fill all required fields (*)');return;}
+    hideErr('s-err');
+  } else {
+    const proj=getProjVal('d'),cont=val('d-cont'),desc=val('d-desc');
+    if(!proj||!cont||!desc){showErr('d-err','Fill Project, Contractor and Description (*)');return;}
+    hideErr('d-err');
+  }
+  const editId=$(prefix+'-edit-id')?$(prefix+'-edit-id').value:'';
+  const btn=$(prefix+'-btn');btn.innerHTML='Saving...';btn.disabled=true;
+  const existPhoto=$(prefix+'-edit-photo')?$(prefix+'-edit-photo').value:'';
+  const photo_url=await uploadPhoto(prefix,existPhoto||null);
+  const behalf=val(prefix+'-behalf')||STATE.profile?.name;
+  let payload={type:isS?'stock':'daily',status:'submitted',
+    submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
+    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
+  if(isS){
+    Object.assign(payload,{project:getProjVal('s'),from_location:getLocVal('s-from'),
+      to_location:getLocVal('s-to'),instructed_by:val('s-inst'),
+      received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});
+  } else {
+    Object.assign(payload,{project:getProjVal('d'),report_type:val('d-type'),
+      contractor:val('d-cont'),description:val('d-desc'),remarks:val('d-rem')});
+  }
+  let error;
+  if(editId){({error}=await sb.from('reports').update(payload).eq('id',editId));}
+  else{({error}=await sb.from('reports').insert(payload));}
+  btn.innerHTML='&#10003; Submit / Save Draft';btn.disabled=false;
+  if(error){showErr(prefix+'-err',error.message);return;}
+  // Clear hidden inputs
+  if($(prefix+'-edit-id'))$(prefix+'-edit-id').value='';
+  if($(prefix+'-edit-photo'))$(prefix+'-edit-photo').value='';
+  toast(isS?'Stock report submitted!':'Daily report submitted!');
+  show('home');
+}
+
+const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,doSaveDraft,doSubmit,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
