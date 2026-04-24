@@ -768,26 +768,8 @@ async function uploadPhoto(prefix,existingUrl){
 
 // ── Save Draft ───────────────────────────────────────────
 async function saveDraft(prefix){
-  const isS=prefix==='s';
-  const proj=getProjVal(prefix)||'(Draft - no project)';
-  hideErr(prefix+'-err');
-  const editIdEl=$(prefix+'-edit-id');
-  const editId=editIdEl?editIdEl.value:'';
-  const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const existUrl=editId?($(prefix+'-edit-photo')?.value||null):null;
-  const photo_url=await uploadPhoto(prefix,existUrl);
-  const behalf=val(prefix+'-behalf')||STATE.profile?.name;
-  let payload={type:isS?'stock':'daily',project:proj,status:'draft',
-    submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
-  if(isS){Object.assign(payload,{from_location:getLocVal('s-from'),to_location:getLocVal('s-to'),instructed_by:val('s-inst'),received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});}
-  else{Object.assign(payload,{report_type:val('d-type'),contractor:val('d-cont'),description:val('d-desc'),remarks:val('d-rem')});}
-  let error;
-  if(editId){({error}=await sb.from('reports').update(payload).eq('id',editId));}
-  else{({error}=await sb.from('reports').insert(payload));}
-  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
-  if(error){showErr(prefix+'-err',error.message);return;}
-  toast('Draft saved!');show('home');
+  // Legacy function kept for compatibility - now handled by doSaveDraft
+  doSaveDraft(prefix);
 }
 
 // ── Submit Stock ─────────────────────────────────────────
