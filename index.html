@@ -668,11 +668,11 @@ async function initForm(prefix){
 async function editDraft(id){
   const r=STATE.records.find(x=>x.id===id);if(!r)return;
   document.getElementById('mod')?.remove();
-  const prefix=r.type==='stock'?'s':'d';
-  await initForm(prefix);
-  // Store edit ID in module-level var that cannot be reset by UI
+  // Set EDIT_ID FIRST - before initForm or show
   EDIT_ID=id;
   STATE.editId=id;
+  const prefix=r.type==='stock'?'s':'d';
+  await initForm(prefix);
   show(r.type==='stock'?'stock':'daily');
   await new Promise(res=>setTimeout(res,350));
   EDIT_ID=id; STATE.editId=id; // set again after animation
