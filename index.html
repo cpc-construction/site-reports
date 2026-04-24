@@ -749,11 +749,12 @@ async function uploadPhoto(prefix,existingUrl){
 // ── Save Draft ───────────────────────────────────────────
 async function saveDraft(prefix){
   const isS=prefix==='s';
-  const proj=getProjVal(prefix);
-  if(!proj){showErr(prefix+(isS?'s':'d')+'-err','Please select or enter a project name');return;}
-  hideErr(prefix+(isS?'s':'d')+'-err');
-  const btn=$(prefix+(isS?'s':'d')+'-draft-btn');btn.textContent='Saving...';btn.disabled=true;
-  const photo_url=await uploadPhoto(prefix, STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null);
+  // Draft - no required fields, save whatever is filled
+  const proj=getProjVal(prefix)||'(Draft - no project)';
+  hideErr(prefix+'-err');
+  const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
+  const existUrl=STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null;
+  const photo_url=await uploadPhoto(prefix,existUrl);
   const behalf=val(prefix+'-behalf')||STATE.profile?.name;
   let payload={type:isS?'stock':'daily',project:proj,status:'draft',
     submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
@@ -763,8 +764,8 @@ async function saveDraft(prefix){
   let error;
   if(STATE.editId){({error}=await sb.from('reports').update(payload).eq('id',STATE.editId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.textContent='&#9998; Save Draft';btn.disabled=false;
-  if(error){showErr(prefix+(isS?'s':'d')+'-err',error.message);return;}
+  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
+  if(error){showErr(prefix+'-err',error.message);return;}
   toast('Draft saved!');show('home');
 }
 
