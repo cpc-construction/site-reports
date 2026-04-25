@@ -1,10 +1,9 @@
-const CACHE = 'cpc-reports-v3';
-
-// Use relative paths — works regardless of GitHub Pages subfolder
+const CACHE = 'cpc-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './config.js',
   './icon-192.png',
   './icon-512.png'
 ];
@@ -12,10 +11,7 @@ const ASSETS = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => {
-        // Add one by one so a single failure doesn't break everything
-        return Promise.allSettled(ASSETS.map(a => c.add(a)));
-      })
+      .then(c => Promise.allSettled(ASSETS.map(a => c.add(a))))
       .then(() => self.skipWaiting())
   );
 });
@@ -31,17 +27,17 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Always go network-first for Supabase and CDN calls
   if (e.request.url.includes('supabase.co') ||
       e.request.url.includes('cdn.jsdelivr.net')) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
     return;
   }
-  // Cache-first for local app files
+  // Always fetch fresh for HTML files
+  if (e.request.url.endsWith('.html') || e.request.url.endsWith('/')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   e.respondWith(
-    caches.match(e.request)
-      .then(cached => cached || fetch(e.request))
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
