@@ -885,9 +885,10 @@ function viewRec(id){
     (r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;margin-bottom:12px;display:block">':'<div style="background:#f5f8fc;border-radius:8px;height:50px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:12px">No photo attached</div>')+
     rows+
     '<div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">'+
-    (isDraft?'<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editDraft(\''+r.id+'\')">&#9998; Edit &amp; Submit</button>':'')+''+
+    '<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editRecord(\''+r.id+'\')">&#9998; Edit</button>'+
+    '<button class="btn btn-navy btn-sm" style="flex:1" onclick="App.shareReport(\''+r.id+'\')">&#8594; Share</button>'+
     (canDel?'<button class="btn btn-danger btn-sm" style="flex:1" onclick="App.deleteRec(\''+r.id+'\')">Delete</button>':'')+
-    '<button class="btn btn-navy btn-sm" style="flex:2" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
+    '<button class="btn btn-ghost btn-sm" style="flex:1;margin-top:4px" onclick="document.getElementById(\'mod\').remove()">Close</button></div></div>';
   document.body.appendChild(m);
 }
 async function deleteRec(id){
@@ -1259,7 +1260,93 @@ function confirmSubmit(prefix){
   else submitDaily();
 }
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,submitStock,submitDaily,saveDraft,editDraft,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
+
+// ── Edit any record ───────────────────────────────────────
+async function editRecord(id){
+  const r=STATE.records.find(x=>x.id===id);if(!r)return;
+  document.getElementById('mod')?.remove();
+  // Set EDIT_ID first before anything
+  EDIT_ID=id;
+  STATE.editId=id;
+  const prefix=r.type==='stock'?'s':'d';
+  const isS=prefix==='s';
+  // Navigate to form
+  const cur=STATE.screen;
+  const curEl=$('scr-'+cur);
+  if(curEl){curEl.classList.add('slide-left');setTimeout(()=>{curEl.classList.add('hidden');curEl.classList.remove('slide-left');},280);}
+  const targetEl=$('scr-'+(isS?'stock':'daily'));
+  if(targetEl){targetEl.classList.remove('hidden');targetEl.style.transform='translateX(100%)';targetEl.style.opacity='0';
+    requestAnimationFrame(()=>{targetEl.style.transition='transform .28s cubic-bezier(.4,0,.2,1),opacity .28s';targetEl.style.transform='';targetEl.style.opacity='';setTimeout(()=>targetEl.style.transition='',300);});}
+  STATE.screen=isS?'stock':'daily';updateHdr(STATE.screen);
+  // Load projects then fill form
+  await loadProjectsData();
+  populateProjSelect(prefix);
+  if(isS)populateLocSelects();
+  STATE.photoFile[prefix]=null;
+  resetPhoto(prefix);setupPhotoZone(prefix);
+  const p=STATE.profile||{};
+  $(prefix+(isS?'tock':'aily')+'-ini').textContent=ini(p.name);
+  $(prefix+(isS?'tock':'aily')+'-name').textContent=p.name||'-';
+  $(prefix+(isS?'tock':'aily')+'-ts').textContent='Date: '+nowStr();
+  // Fill all fields
+  if(isS){
+    $('s-behalf').value=r.on_behalf_of||'';
+    const pOpt=Array.from($('s-proj-sel').options).find(o=>o.value===r.project);
+    if(pOpt){$('s-proj-sel').value=r.project;}else{$('s-proj-sel').value='__other__';$('s-proj-txt').value=r.project||'';$('s-proj-txt').classList.add('show');}
+    const fOpt=Array.from($('s-from-sel').options).find(o=>o.value===r.from_location);
+    if(fOpt){$('s-from-sel').value=r.from_location;}else{$('s-from-sel').value='__other__';$('s-from-txt').value=r.from_location||'';$('s-from-txt').classList.add('show');}
+    const tOpt=Array.from($('s-to-sel').options).find(o=>o.value===r.to_location);
+    if(tOpt){$('s-to-sel').value=r.to_location;}else{$('s-to-sel').value='__other__';$('s-to-txt').value=r.to_location||'';$('s-to-txt').classList.add('show');}
+    $('s-inst').value=r.instructed_by||'';$('s-recv').value=r.received_by||'';
+    $('s-items').value=r.items||'';$('s-qty').value=r.qty||'';
+    hideErr('s-err');
+  }else{
+    $('d-behalf').value=r.on_behalf_of||'';
+    const pOpt=Array.from($('d-proj-sel').options).find(o=>o.value===r.project);
+    if(pOpt){$('d-proj-sel').value=r.project;}else{$('d-proj-sel').value='__other__';$('d-proj-txt').value=r.project||'';$('d-proj-txt').classList.add('show');}
+    $('d-type').value=r.report_type||'Daily Progress';
+    $('d-cont').value=r.contractor||'';$('d-desc').value=r.description||'';$('d-rem').value=r.remarks||'';
+    hideErr('d-err');
+  }
+  if(r.photo_url){
+    const pa=$(prefix+'-pa');
+    pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
+    pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
+  }
+  toast('Record loaded — edit and resubmit!');
+}
+
+// ── Share report ──────────────────────────────────────────
+async function shareReport(id){
+  const r=STATE.records.find(x=>x.id===id);if(!r)return;
+  const nl='\n',line='--------------------';
+  let text='';
+  if(r.type==='stock'){
+    text='[STOCK REPORT] CPC'+nl+line+nl+
+      'Date: '+fmtDt(r.created_at)+nl+'Project: '+r.project+nl+
+      'From: '+(r.from_location||'-')+nl+'To: '+(r.to_location||'-')+nl+
+      'Instructed By: '+(r.instructed_by||'-')+nl+'Received By: '+(r.received_by||'-')+nl+
+      'Items: '+(r.items||'-')+nl+'Qty: '+(r.qty||'-')+nl+
+      'Submitted By: '+(r.submitted_by_name||'-')+nl+
+      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
+  }else{
+    text='[DAILY REPORT] CPC'+nl+line+nl+
+      'Date: '+fmtDt(r.created_at)+nl+'Project: '+r.project+nl+
+      'Type: '+(r.report_type||'-')+nl+'Contractor: '+(r.contractor||'-')+nl+
+      'Description: '+(r.description||'-')+nl+'Remarks: '+(r.remarks||'-')+nl+
+      'Submitted By: '+(r.submitted_by_name||'-')+nl+
+      (r.photo_url?'Photo: '+r.photo_url:'No photo attached');
+  }
+  if(navigator.share){
+    try{await navigator.share({title:'CPC Site Report',text:text});}
+    catch(e){if(e.name!=='AbortError')toast('Share failed');}
+  }else{
+    try{await navigator.clipboard.writeText(text);toast('Copied to clipboard!');}
+    catch(e){toast('Share not supported on this browser');}
+  }
+}
+
+const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,submitStock,submitDaily,saveDraft,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
