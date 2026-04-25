@@ -326,7 +326,7 @@ input[type=file]{display:none}
       <div class="err" id="s-err"></div>
       <hr class="div">
       <div class="r2">
-        <button class="btn btn-green" id="s-btn" onclick="App.submitStock()">&#10003; Submit</button>
+        <button class="btn btn-green" id="s-btn">&#10003; Submit</button>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
@@ -376,7 +376,7 @@ input[type=file]{display:none}
       <div class="err" id="d-err"></div>
       <hr class="div">
       <div class="r2">
-        <button class="btn btn-green" id="d-btn" onclick="App.submitDaily()">&#10003; Submit</button>
+        <button class="btn btn-green" id="d-btn">&#10003; Submit</button>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
@@ -650,6 +650,9 @@ async function initForm(prefix){
   resetPhoto(prefix);setupPhotoZone(prefix);
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
+  // Set default submit onclick for fresh forms
+  if(isS){$('s-btn').onclick=()=>App.submitStock();}
+  else{$('d-btn').onclick=()=>App.submitDaily();}
   // Pre-select project if coming from project picker
   if(!isS&&STATE.selectedProject){
     const sel=$(prefix+'-proj-sel');
@@ -1300,6 +1303,9 @@ async function editRecord(id){
   await loadProjectsData();
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
+  // Set default submit onclick for fresh forms
+  if(isS){$('s-btn').onclick=()=>App.submitStock();}
+  else{$('d-btn').onclick=()=>App.submitDaily();}
   STATE.photoFile[prefix]=null;
   resetPhoto(prefix);setupPhotoZone(prefix);
   const p=STATE.profile||{};
