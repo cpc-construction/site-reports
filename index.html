@@ -809,7 +809,9 @@ async function submitDaily(editId){
   if(!proj){showErr('d-err','Please select a Project (*)');return;}
   hideErr('d-err');
   const btn=$('d-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const existUrl=STATE.editId?(STATE.records.find(r=>r.id===STATE.editId)?.photo_url):null;
+  const activeEditId=editId||EDIT_ID||STATE.editId||null;
+  console.log('submitDaily: activeEditId='+activeEditId);
+  const existUrl=activeEditId?(STATE.records.find(r=>r.id===activeEditId)?.photo_url):null;
   const photo_url=await uploadPhoto('d',existUrl);
   const behalf=val('d-behalf')||STATE.profile?.name;
   const payload={type:'daily',project:proj,status:'submitted',
@@ -817,8 +819,6 @@ async function submitDaily(editId){
     on_behalf_of:behalf,photo_url,
     report_type:val('d-type'),contractor:cont,description:desc,remarks:val('d-rem'),
     updated_at:new Date().toISOString()};
-  const activeEditId=EDIT_ID||STATE.editId||null;
-  console.log('submitDaily: activeEditId='+activeEditId);
   let error;
   if(activeEditId){({error}=await sb.from('reports').update(payload).eq('id',activeEditId));}
   else{({error}=await sb.from('reports').insert(payload));}
