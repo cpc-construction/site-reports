@@ -651,8 +651,13 @@ async function initForm(prefix){
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
   // Set default submit onclick for fresh forms
-  if(isS){$('s-btn').onclick=()=>App.submitStock();}
-  else{$('d-btn').onclick=()=>App.submitDaily();}
+  if(isS){
+    $('s-btn').onclick=()=>App.submitStock();
+    if($('s-draft-btn'))$('s-draft-btn').onclick=()=>App.saveDraft('s');
+  } else {
+    $('d-btn').onclick=()=>App.submitDaily();
+    if($('d-draft-btn'))$('d-draft-btn').onclick=()=>App.saveDraft('d');
+  }
   // Pre-select project if coming from project picker
   if(!isS&&STATE.selectedProject){
     const sel=$(prefix+'-proj-sel');
@@ -703,8 +708,10 @@ async function editDraft(id){
   // Override submit button onclick to pass ID directly
   if(isS){
     $('s-btn').onclick=()=>submitStock(id);
+    if($('s-draft-btn'))$('s-draft-btn').onclick=()=>saveDraft('s');
   } else {
     $('d-btn').onclick=()=>submitDaily(id);
+    if($('d-draft-btn'))$('d-draft-btn').onclick=()=>saveDraft('d');
   }
   toast('Draft loaded — edit and submit!');
 }
@@ -760,7 +767,7 @@ async function saveDraft(prefix){
   const proj=getProjVal(prefix)||'(Draft - no project)';
   hideErr(prefix+'-err');
   const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const activeEditId=editId||EDIT_ID||STATE.editId||null;
+  const activeEditId=EDIT_ID||STATE.editId||null;
   console.log('saveDraft: activeEditId='+activeEditId);
   const existUrl=activeEditId?(STATE.records.find(r=>r.id===activeEditId)?.photo_url):null;
   const photo_url=await uploadPhoto(prefix,existUrl);
@@ -773,7 +780,7 @@ async function saveDraft(prefix){
   let error;
   if(activeEditId){({error}=await sb.from('reports').update(payload).eq('id',activeEditId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
+  btn.innerHTML='&#9998; Draft';btn.disabled=false;
   if(error){showErr(prefix+'-err',error.message);return;}
   EDIT_ID=null;STATE.editId=null;
   toast('Draft saved!');show('home');
@@ -1304,8 +1311,13 @@ async function editRecord(id){
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
   // Set default submit onclick for fresh forms
-  if(isS){$('s-btn').onclick=()=>App.submitStock();}
-  else{$('d-btn').onclick=()=>App.submitDaily();}
+  if(isS){
+    $('s-btn').onclick=()=>App.submitStock();
+    if($('s-draft-btn'))$('s-draft-btn').onclick=()=>App.saveDraft('s');
+  } else {
+    $('d-btn').onclick=()=>App.submitDaily();
+    if($('d-draft-btn'))$('d-draft-btn').onclick=()=>App.saveDraft('d');
+  }
   STATE.photoFile[prefix]=null;
   resetPhoto(prefix);setupPhotoZone(prefix);
   const p=STATE.profile||{};
@@ -1340,8 +1352,10 @@ async function editRecord(id){
   // Override submit button onclick to pass ID directly - bulletproof!
   if(isS){
     $('s-btn').onclick=()=>submitStock(id);
+    if($('s-draft-btn'))$('s-draft-btn').onclick=()=>saveDraft('s');
   } else {
     $('d-btn').onclick=()=>submitDaily(id);
+    if($('d-draft-btn'))$('d-draft-btn').onclick=()=>saveDraft('d');
   }
   toast('Record loaded — edit and resubmit!');
 }
