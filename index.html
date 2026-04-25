@@ -327,8 +327,8 @@ input[type=file]{display:none}
       <hr class="div">
       <div class="r2">
       <div class="r2">
-        <button class="btn btn-amber" id="s-draft-btn">&#9998; Save Draft</button>
-        <button class="btn btn-green" id="s-btn">&#10003; Submit</button>
+        <button class="btn btn-amber" id="s-draft-btn" style="font-size:13px">&#9998; Draft</button>
+        <button class="btn btn-green" id="s-btn" style="font-size:13px">&#10003; Submit</button>
       </div>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
@@ -380,8 +380,8 @@ input[type=file]{display:none}
       <hr class="div">
       <div class="r2">
       <div class="r2">
-        <button class="btn btn-amber" id="d-draft-btn">&#9998; Save Draft</button>
-        <button class="btn btn-green" id="d-btn">&#10003; Submit</button>
+        <button class="btn btn-amber" id="d-draft-btn" style="font-size:13px">&#9998; Draft</button>
+        <button class="btn btn-green" id="d-btn" style="font-size:13px">&#10003; Submit</button>
       </div>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
@@ -786,7 +786,7 @@ async function saveDraft(prefix){
   let error;
   if(activeEditId){({error}=await sb.from('reports').update(payload).eq('id',activeEditId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
+  btn.innerHTML='&#9998; Draft';btn.disabled=false;
   if(error){showErr(prefix+'-err',error.message);return;}
   EDIT_ID=null;STATE.editId=null;
   toast('Draft saved!');show('home');
