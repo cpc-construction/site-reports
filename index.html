@@ -697,6 +697,12 @@ async function editDraft(id){
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   }
+  // Override submit button onclick to pass ID directly
+  if(isS){
+    $('s-btn').onclick=()=>submitStock(id);
+  } else {
+    $('d-btn').onclick=()=>submitDaily(id);
+  }
   toast('Draft loaded — edit and submit!');
 }
 
@@ -751,7 +757,7 @@ async function saveDraft(prefix){
   const proj=getProjVal(prefix)||'(Draft - no project)';
   hideErr(prefix+'-err');
   const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const activeEditId=EDIT_ID||STATE.editId||null;
+  const activeEditId=editId||EDIT_ID||STATE.editId||null;
   console.log('saveDraft: activeEditId='+activeEditId);
   const existUrl=activeEditId?(STATE.records.find(r=>r.id===activeEditId)?.photo_url):null;
   const photo_url=await uploadPhoto(prefix,existUrl);
@@ -771,12 +777,12 @@ async function saveDraft(prefix){
 }
 
 // ── Submit Stock ─────────────────────────────────────────
-async function submitStock(){
+async function submitStock(editId){
   const proj=getProjVal('s'),from=getLocVal('s-from'),to=getLocVal('s-to'),inst=val('s-inst');
   if(!proj||!from||!to||!inst){showErr('s-err','Please fill all required fields (*)');return;}
   hideErr('s-err');
   const btn=$('s-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const activeEditId=EDIT_ID||STATE.editId||null;
+  const activeEditId=editId||EDIT_ID||STATE.editId||null;
   console.log('submitStock: activeEditId='+activeEditId);
   const existUrl=activeEditId?(STATE.records.find(r=>r.id===activeEditId)?.photo_url):null;
   const photo_url=await uploadPhoto('s',existUrl);
@@ -793,11 +799,12 @@ async function submitStock(){
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
   EDIT_ID=null;STATE.editId=null;
+  $('s-btn').onclick=()=>App.submitStock();
   toast('Stock report saved!');show('home');
 }
 
 // ── Submit Daily ─────────────────────────────────────────
-async function submitDaily(){
+async function submitDaily(editId){
   const proj=getProjVal('d'),cont=val('d-cont'),desc=val('d-desc');
   if(!proj){showErr('d-err','Please select a Project (*)');return;}
   hideErr('d-err');
@@ -818,6 +825,7 @@ async function submitDaily(){
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
   EDIT_ID=null;STATE.editId=null;
+  $('d-btn').onclick=()=>App.submitDaily();
   toast('Daily report saved!');show('home');
 }
 
@@ -1312,6 +1320,12 @@ async function editRecord(id){
     const pa=$(prefix+'-pa');
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
+  }
+  // Override submit button onclick to pass ID directly - bulletproof!
+  if(isS){
+    $('s-btn').onclick=()=>submitStock(id);
+  } else {
+    $('d-btn').onclick=()=>submitDaily(id);
   }
   toast('Record loaded — edit and resubmit!');
 }
