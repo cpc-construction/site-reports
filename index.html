@@ -159,7 +159,7 @@ input[type=file]{display:none}
   <div class="screens">
 
     <!-- LOGIN -->
-    <div class="screen login-wrap" id="scr-login">
+    <div class="screen login-wrap" id="scr-login" style="display:flex;flex-direction:column">
       <div class="logo"><img class="logo-img" src="icon-512.png" alt="CPC Logo"><h2>CPC Site Reports</h2><p>Sign in to continue</p></div>
       <div class="fl"><div class="lbl">Email</div><input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
       <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
@@ -1398,7 +1398,11 @@ const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,subm
 
 
 (async()=>{
-  if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY.');return;}
+  if(!initSB()){
+    show('login');
+    showErr('l-err','Supabase config missing. Check config.js');
+    return;
+  }
   // Safety timeout - if anything hangs for 8 seconds, force go to login
   const safetyTimer=setTimeout(async()=>{
     console.log('Safety timeout - clearing session');
