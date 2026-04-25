@@ -159,7 +159,7 @@ input[type=file]{display:none}
   <div class="screens">
 
     <!-- LOGIN -->
-    <div class="screen login-wrap" id="scr-login" style="display:flex;flex-direction:column">
+    <div class="screen login-wrap" id="scr-login">
       <div class="logo"><img class="logo-img" src="icon-512.png" alt="CPC Logo"><h2>CPC Site Reports</h2><p>Sign in to continue</p></div>
       <div class="fl"><div class="lbl">Email</div><input class="inp" id="l-email" type="email" placeholder="you@cpc.com" autocomplete="email"></div>
       <div class="fl"><div class="lbl">Password</div><input class="inp" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
@@ -282,8 +282,7 @@ input[type=file]{display:none}
           <input class="inp combo-custom" id="s-proj-txt" placeholder="Type project name">
         </div>
       </div>
-      <
->
+      <div class="r2">
         <div class="fl">
           <div class="lbl">From *</div>
           <div class="combo">
@@ -326,9 +325,8 @@ input[type=file]{display:none}
       </div>
       <div class="err" id="s-err"></div>
       <hr class="div">
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-amber" id="s-draft-btn" style="font-size:13px">&#9998; Draft</button>
-        <button class="btn btn-green" id="s-btn" style="font-size:13px">&#10003; Submit</button>
+      <div class="r2">
+        <button class="btn btn-green" id="s-btn">&#10003; Submit</button>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
@@ -353,7 +351,6 @@ input[type=file]{display:none}
           <input class="inp combo-custom" id="d-proj-txt" placeholder="Type project name">
         </div>
       </div>
-
       <div class="fl"><div class="lbl">Report Type</div>
         <select class="inp" id="d-type">
           <option>Daily Progress</option><option>Incident Report</option><option>Near Miss</option>
@@ -378,9 +375,8 @@ input[type=file]{display:none}
       </div>
       <div class="err" id="d-err"></div>
       <hr class="div">
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-amber" id="d-draft-btn" style="font-size:13px">&#9998; Draft</button>
-        <button class="btn btn-green" id="d-btn" style="font-size:13px">&#10003; Submit</button>
+      <div class="r2">
+        <button class="btn btn-green" id="d-btn">&#10003; Submit</button>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
     </div>
@@ -655,13 +651,8 @@ async function initForm(prefix){
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
   // Set default submit onclick for fresh forms
-  if(isS){
-    $('s-btn').onclick=()=>App.submitStock();
-    $('s-draft-btn').onclick=()=>App.saveDraft('s');
-  } else {
-    $('d-btn').onclick=()=>App.submitDaily();
-    $('d-draft-btn').onclick=()=>App.saveDraft('d');
-  }
+  if(isS){$('s-btn').onclick=()=>App.submitStock();}
+  else{$('d-btn').onclick=()=>App.submitDaily();}
   // Pre-select project if coming from project picker
   if(!isS&&STATE.selectedProject){
     const sel=$(prefix+'-proj-sel');
@@ -709,13 +700,11 @@ async function editDraft(id){
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   }
-  // Override submit and draft buttons to pass ID directly
+  // Override submit button onclick to pass ID directly
   if(isS){
     $('s-btn').onclick=()=>submitStock(id);
-    $('s-draft-btn').onclick=()=>saveDraft('s');
   } else {
     $('d-btn').onclick=()=>submitDaily(id);
-    $('d-draft-btn').onclick=()=>saveDraft('d');
   }
   toast('Draft loaded — edit and submit!');
 }
@@ -771,7 +760,7 @@ async function saveDraft(prefix){
   const proj=getProjVal(prefix)||'(Draft - no project)';
   hideErr(prefix+'-err');
   const btn=$(prefix+'-draft-btn');btn.innerHTML='Saving...';btn.disabled=true;
-  const activeEditId=EDIT_ID||STATE.editId||null;
+  const activeEditId=editId||EDIT_ID||STATE.editId||null;
   console.log('saveDraft: activeEditId='+activeEditId);
   const existUrl=activeEditId?(STATE.records.find(r=>r.id===activeEditId)?.photo_url):null;
   const photo_url=await uploadPhoto(prefix,existUrl);
@@ -784,7 +773,7 @@ async function saveDraft(prefix){
   let error;
   if(activeEditId){({error}=await sb.from('reports').update(payload).eq('id',activeEditId));}
   else{({error}=await sb.from('reports').insert(payload));}
-  btn.innerHTML='&#9998; Draft';btn.disabled=false;
+  btn.innerHTML='&#9998; Save Draft';btn.disabled=false;
   if(error){showErr(prefix+'-err',error.message);return;}
   EDIT_ID=null;STATE.editId=null;
   toast('Draft saved!');show('home');
@@ -1315,13 +1304,8 @@ async function editRecord(id){
   populateProjSelect(prefix);
   if(isS)populateLocSelects();
   // Set default submit onclick for fresh forms
-  if(isS){
-    $('s-btn').onclick=()=>App.submitStock();
-    $('s-draft-btn').onclick=()=>App.saveDraft('s');
-  } else {
-    $('d-btn').onclick=()=>App.submitDaily();
-    $('d-draft-btn').onclick=()=>App.saveDraft('d');
-  }
+  if(isS){$('s-btn').onclick=()=>App.submitStock();}
+  else{$('d-btn').onclick=()=>App.submitDaily();}
   STATE.photoFile[prefix]=null;
   resetPhoto(prefix);setupPhotoZone(prefix);
   const p=STATE.profile||{};
@@ -1353,13 +1337,11 @@ async function editRecord(id){
     pa.innerHTML='<img src="'+r.photo_url+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
     pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
   }
-  // Override submit and draft buttons to pass ID directly
+  // Override submit button onclick to pass ID directly - bulletproof!
   if(isS){
     $('s-btn').onclick=()=>submitStock(id);
-    $('s-draft-btn').onclick=()=>saveDraft('s');
   } else {
     $('d-btn').onclick=()=>submitDaily(id);
-    $('d-draft-btn').onclick=()=>saveDraft('d');
   }
   toast('Record loaded — edit and resubmit!');
 }
@@ -1398,11 +1380,7 @@ const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,subm
 
 
 (async()=>{
-  if(!initSB()){
-    show('login');
-    showErr('l-err','Supabase config missing. Check config.js');
-    return;
-  }
+  if(!initSB()){alert('Supabase credentials missing!\n\nFill in SUPABASE_URL and SUPABASE_KEY.');return;}
   // Safety timeout - if anything hangs for 8 seconds, force go to login
   const safetyTimer=setTimeout(async()=>{
     console.log('Safety timeout - clearing session');
