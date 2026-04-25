@@ -798,6 +798,11 @@ async function submitStock(editId){
   else{({error}=await sb.from('reports').insert(payload));}
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('s-err',error.message);return;}
+  // Update local cache immediately so UI reflects change
+  if(activeEditId){
+    const idx=STATE.records.findIndex(r=>r.id==activeEditId);
+    if(idx>-1)STATE.records[idx]={...STATE.records[idx],...payload,id:activeEditId};
+  }
   EDIT_ID=null;STATE.editId=null;
   $('s-btn').onclick=()=>App.submitStock();
   toast('Stock report saved!');show('home');
@@ -824,6 +829,11 @@ async function submitDaily(editId){
   else{({error}=await sb.from('reports').insert(payload));}
   btn.innerHTML='&#10003; Submit';btn.disabled=false;
   if(error){showErr('d-err',error.message);return;}
+  // Update local cache immediately
+  if(activeEditId){
+    const idx=STATE.records.findIndex(r=>r.id==activeEditId);
+    if(idx>-1)STATE.records[idx]={...STATE.records[idx],...payload,id:activeEditId};
+  }
   EDIT_ID=null;STATE.editId=null;
   $('d-btn').onclick=()=>App.submitDaily();
   toast('Daily report saved!');show('home');
