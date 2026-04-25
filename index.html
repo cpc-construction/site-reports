@@ -51,7 +51,7 @@ textarea.inp{resize:none;min-height:78px;line-height:1.5}
 .combo-custom{display:none;margin-top:5px}
 .combo-custom.show{display:block}
 /* Buttons */
-.btn{width:100%;padding:13px;border-radius:var(--rsm);font-size:14px;font-weight:700;border:none;cursor:pointer;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn{width:100%;padding:13px;border-radius:var(--rsm);font-size:14px;font-weight:700;border:none;cursor:pointer;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:7px;text-align:center}
 .btn:active{transform:scale(.97)}
 .btn-navy{background:var(--navy);color:#fff}
 .btn-gold{background:var(--gold);color:#fff}
@@ -326,9 +326,9 @@ input[type=file]{display:none}
       <div class="err" id="s-err"></div>
       <hr class="div">
       <div class="r2">
-      <div class="r2">
-        <button class="btn btn-amber" id="s-draft-btn" style="font-size:13px">&#9998; Draft</button>
-        <button class="btn btn-green" id="s-btn" style="font-size:13px">&#10003; Submit</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-amber" id="s-draft-btn" style="font-size:13px;justify-content:center">&#9998; Draft</button>
+        <button class="btn btn-green" id="s-btn" style="font-size:13px;justify-content:center">&#10003; Submit</button>
       </div>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
@@ -379,9 +379,9 @@ input[type=file]{display:none}
       <div class="err" id="d-err"></div>
       <hr class="div">
       <div class="r2">
-      <div class="r2">
-        <button class="btn btn-amber" id="d-draft-btn" style="font-size:13px">&#9998; Draft</button>
-        <button class="btn btn-green" id="d-btn" style="font-size:13px">&#10003; Submit</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-amber" id="d-draft-btn" style="font-size:13px;justify-content:center">&#9998; Draft</button>
+        <button class="btn btn-green" id="d-btn" style="font-size:13px;justify-content:center">&#10003; Submit</button>
       </div>
       </div>
       <button class="btn btn-ghost" onclick="App.show('home')">Cancel</button>
