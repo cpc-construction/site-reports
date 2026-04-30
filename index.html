@@ -314,14 +314,8 @@ input[type=file]{display:none}
         <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="s-file" onchange="App.loadPhoto('s',this)">
         <input type="file" accept="image/*" id="s-file-gallery" onchange="App.loadPhoto('s',this)">
-        <div class="pa" id="s-pa">
-          <div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div>
-          <div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div>
-          <div class="pa-btns">
-            <button class="pa-btn" onclick="document.getElementById('s-file').click()">&#128247; Camera</button>
-            <button class="pa-btn ghost" onclick="document.getElementById('s-file-gallery').click()">&#128440; Gallery</button>
-          </div>
-        </div>
+        <div id="s-photos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        <button class="pa-btn" style="width:100%;padding:10px;margin-top:4px" onclick="App.addPhotoSlot('s')" id="s-add-photo">&#128247; Add Photo (0/4)</button>
       </div>
       <div class="err" id="s-err"></div>
       <hr class="div">
@@ -365,14 +359,8 @@ input[type=file]{display:none}
         <div class="lbl">Photo Evidence</div>
         <input type="file" accept="image/*" capture="environment" id="d-file" onchange="App.loadPhoto('d',this)">
         <input type="file" accept="image/*" id="d-file-gallery" onchange="App.loadPhoto('d',this)">
-        <div class="pa" id="d-pa">
-          <div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div>
-          <div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div>
-          <div class="pa-btns">
-            <button class="pa-btn" onclick="document.getElementById('d-file').click()">&#128247; Camera</button>
-            <button class="pa-btn ghost" onclick="document.getElementById('d-file-gallery').click()">&#128440; Gallery</button>
-          </div>
-        </div>
+        <div id="d-photos-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+        <button class="pa-btn" style="width:100%;padding:10px;margin-top:4px" onclick="App.addPhotoSlot('d')" id="d-add-photo">&#128247; Add Photo (0/4)</button>
       </div>
       <div class="err" id="d-err"></div>
       <hr class="div">
@@ -458,7 +446,7 @@ let sb=null;
 let EDIT_ID=null; // Separate from STATE to prevent accidental reset
 function initSB(){try{sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);return true;}catch(e){return false;}}
 
-const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:null,d:null},records:[],projects:[],locations:[],editId:null,selectedProject:null};
+const STATE={screen:'login',user:null,profile:null,tab:'all',photoFile:{s:[],d:[]},records:[],projects:[],locations:[],editId:null,selectedProject:null};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value.trim():''};
 const ini=n=>n?n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2):'?';
@@ -726,48 +714,112 @@ async function editDraft(id){
   toast('Draft loaded — edit and submit!');
 }
 
-// ── Photo ────────────────────────────────────────────────
+// ── Photo (Multiple - up to 4) ───────────────────────────
+const MAX_PHOTOS=4;
+
 function resetPhoto(p){
-  const pa=$(p+'-pa');if(!pa)return;
-  pa.innerHTML='<div class="pa-icons"><span>&#128247;</span><span>&#128444;</span><span>&#128203;</span></div><div class="pa-hint">Drag &amp; drop, paste (Ctrl+V), or choose below</div><div class="pa-btns"><button class="pa-btn" onclick="document.getElementById(\''+p+'-file\').click()">&#128247; Camera</button><button class="pa-btn ghost" onclick="document.getElementById(\''+p+'-file-gallery\').click()">&#128440; Gallery</button></div>';
-  pa.onclick=null;
+  STATE.photoFile[p]=[];
+  const grid=$(p+'-photos-grid');
+  if(grid)grid.innerHTML='';
+  const addBtn=$(p+'-add-photo');
+  if(addBtn){addBtn.textContent='\u{1F4F7} Add Photo (0/4)';addBtn.style.display='block';}
   const fi=$(p+'-file');if(fi)fi.value='';
   const fg=$(p+'-file-gallery');if(fg)fg.value='';
 }
+
+function renderPhotoGrid(prefix){
+  const grid=$(prefix+'-photos-grid');if(!grid)return;
+  const files=STATE.photoFile[prefix]||[];
+  // Build grid using DOM to avoid quote issues
+  grid.innerHTML='';
+  files.forEach((f,i)=>{
+    const url=f.preview||f;
+    const div=document.createElement('div');
+    div.style.cssText='position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#f5f8fc';
+    const img=document.createElement('img');
+    img.src=url;img.style.cssText='width:100%;height:100%;object-fit:cover';
+    const btn=document.createElement('button');
+    btn.innerHTML='&#x2715;';
+    btn.style.cssText='position:absolute;top:4px;right:4px;background:rgba(192,57,43,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1';
+    btn.onclick=()=>App.removePhoto(prefix,i);
+    div.appendChild(img);div.appendChild(btn);
+    grid.appendChild(div);
+  });
+  const addBtn=$(prefix+'-add-photo');
+  if(addBtn){
+    const count=files.length;
+    addBtn.textContent='\u{1F4F7} Add Photo ('+count+'/'+MAX_PHOTOS+')';
+    addBtn.style.display=count>=MAX_PHOTOS?'none':'block';
+  }
+}
+
+function addPhotoSlot(prefix){
+  const files=STATE.photoFile[prefix]||[];
+  if(files.length>=MAX_PHOTOS){toast('Maximum 4 photos per report');return;}
+  const popup=document.createElement('div');
+  popup.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';
+  const inner=document.createElement('div');
+  inner.style.cssText='background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:430px';
+  inner.innerHTML='<div style="font-size:15px;font-weight:800;margin-bottom:14px">Add Photo</div>';
+  const camBtn=document.createElement('button');
+  camBtn.className='btn btn-navy';camBtn.style.marginBottom='10px';
+  camBtn.innerHTML='&#128247; Camera';
+  camBtn.onclick=()=>{popup.remove();document.getElementById(prefix+'-file').click();};
+  const galBtn=document.createElement('button');
+  galBtn.className='btn btn-ghost';
+  galBtn.innerHTML='&#128440; Gallery';
+  galBtn.onclick=()=>{popup.remove();document.getElementById(prefix+'-file-gallery').click();};
+  inner.appendChild(camBtn);inner.appendChild(galBtn);
+  popup.appendChild(inner);
+  document.body.appendChild(popup);
+  popup.addEventListener('click',e=>{if(e.target===popup)popup.remove();});
+}
+
+function removePhoto(prefix,idx){
+  const files=STATE.photoFile[prefix]||[];
+  files.splice(idx,1);
+  STATE.photoFile[prefix]=files;
+  renderPhotoGrid(prefix);
+}
+
 function setPhotoFromFile(prefix,file){
   if(!file||!file.type.startsWith('image/'))return;
-  STATE.photoFile[prefix]=file;
+  const files=STATE.photoFile[prefix]||[];
+  if(files.length>=MAX_PHOTOS){toast('Maximum 4 photos');return;}
   const r=new FileReader();
   r.onload=e=>{
-    const pa=$(prefix+'-pa');
-    pa.innerHTML='<img src="'+e.target.result+'"><div class="pa-ov"><span>Tap to change photo</span></div>';
-    pa.onclick=()=>document.getElementById(prefix+'-file-gallery').click();
+    file.preview=e.target.result;
+    files.push(file);
+    STATE.photoFile[prefix]=files;
+    renderPhotoGrid(prefix);
   };
   r.readAsDataURL(file);
 }
-function loadPhoto(prefix,input){setPhotoFromFile(prefix,input.files[0]);}
-function setupPhotoZone(prefix){
-  const pa=$(prefix+'-pa');if(!pa)return;
-  pa.addEventListener('dragover',e=>{e.preventDefault();pa.classList.add('drag-over');});
-  pa.addEventListener('dragleave',()=>pa.classList.remove('drag-over'));
-  pa.addEventListener('drop',e=>{e.preventDefault();pa.classList.remove('drag-over');setPhotoFromFile(prefix,e.dataTransfer.files[0]);});
-  if(pa._ph)document.removeEventListener('paste',pa._ph);
-  pa._ph=e=>{
-    const active=STATE.screen==='stock'?'s':STATE.screen==='daily'?'d':null;
-    if(active!==prefix)return;
-    const items=e.clipboardData?.items;if(!items)return;
-    for(const item of items){if(item.type.startsWith('image/')){setPhotoFromFile(prefix,item.getAsFile());toast('Photo pasted!');break;}}
-  };
-  document.addEventListener('paste',pa._ph);
+
+function loadPhoto(prefix,input){
+  if(input.files[0])setPhotoFromFile(prefix,input.files[0]);
+  input.value='';
 }
-async function uploadPhoto(prefix,existingUrl){
-  const file=STATE.photoFile[prefix];
-  if(!file)return existingUrl||null; // keep existing if editing draft
-  const ext=(file.name||'photo.jpg').split('.').pop()||'jpg';
-  const path=STATE.user.id+'/'+Date.now()+'_'+prefix+'.'+ext;
-  const{error}=await sb.storage.from('report-photos').upload(path,file,{upsert:true});
-  if(error){toast('Photo upload failed');return existingUrl||null;}
-  return sb.storage.from('report-photos').getPublicUrl(path).data.publicUrl;
+
+function setupPhotoZone(prefix){
+  // Handled by addPhotoSlot button
+}
+
+async function uploadPhoto(prefix,existingUrls){
+  const files=STATE.photoFile[prefix]||[];
+  if(!files.length)return existingUrls||null;
+  const urls=[];
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    // If existing photo (not changed), keep URL
+    if(file.existing&&file.existingUrl){urls.push(file.existingUrl);continue;}
+    const ext=(file.name||'photo.jpg').split('.').pop()||'jpg';
+    const path=STATE.user.id+'/'+Date.now()+'_'+prefix+'_'+i+'.'+ext;
+    const{error}=await sb.storage.from('report-photos').upload(path,file,{upsert:true});
+    if(error){toast('Photo '+(i+1)+' upload failed');}
+    else{urls.push(sb.storage.from('report-photos').getPublicUrl(path).data.publicUrl);}
+  }
+  return urls.length?urls:null;
 }
 
 // ── Save Draft ───────────────────────────────────────────
@@ -784,7 +836,7 @@ async function saveDraft(prefix){
   const behalf=val(prefix+'-behalf')||STATE.profile?.name;
   let payload={type:isS?'stock':'daily',project:proj,status:'draft',
     submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,updated_at:new Date().toISOString()};
+    on_behalf_of:behalf,photo_url:Array.isArray(photo_url)?photo_url[0]||null:photo_url,photo_urls:JSON.stringify(Array.isArray(photo_url)?photo_url:[photo_url].filter(Boolean)),updated_at:new Date().toISOString()};
   if(isS){Object.assign(payload,{from_location:getLocVal('s-from'),to_location:getLocVal('s-to'),instructed_by:val('s-inst'),received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items')});}
   else{Object.assign(payload,{report_type:val('d-type'),contractor:val('d-cont'),description:val('d-desc'),remarks:val('d-rem')});}
   let error;
@@ -809,7 +861,7 @@ async function submitStock(editId){
   const behalf=val('s-behalf')||STATE.profile?.name;
   const payload={type:'stock',project:proj,status:'submitted',
     submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,
+    on_behalf_of:behalf,photo_url:Array.isArray(photo_url)?photo_url[0]||null:photo_url,photo_urls:JSON.stringify(Array.isArray(photo_url)?photo_url:[photo_url].filter(Boolean)),
     from_location:from,to_location:to,instructed_by:inst,
     received_by:val('s-recv'),qty:val('s-qty'),items:val('s-items'),
     updated_at:new Date().toISOString()};
@@ -841,7 +893,7 @@ async function submitDaily(editId){
   const behalf=val('d-behalf')||STATE.profile?.name;
   const payload={type:'daily',project:proj,status:'submitted',
     submitted_by:STATE.user.id,submitted_by_name:STATE.profile?.name,
-    on_behalf_of:behalf,photo_url,
+    on_behalf_of:behalf,photo_url:Array.isArray(photo_url)?photo_url[0]||null:photo_url,photo_urls:JSON.stringify(Array.isArray(photo_url)?photo_url:[photo_url].filter(Boolean)),
     report_type:val('d-type'),contractor:cont,description:desc,remarks:val('d-rem'),
     updated_at:new Date().toISOString()};
   let error;
@@ -948,7 +1000,12 @@ function viewRec(id){
   const m=document.createElement('div');m.className='modal-bg';m.id='mod';m.style.cssText='position:fixed;inset:0';
   m.innerHTML='<div class="modal" style="position:relative"><button class="mc" onclick="document.getElementById(\'mod\').remove()">&#x2715;</button>'+
     '<h3>'+(isDraft?'&#9998; DRAFT — ':'' )+(r.type==='stock'?'Stock Report':'Daily Report')+'</h3>'+
-    (r.photo_url?'<img src="'+r.photo_url+'" style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;margin-bottom:12px;display:block">':'<div style="background:#f5f8fc;border-radius:8px;height:50px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:12px">No photo attached</div>')+
+    (()=>{
+      const urls=r.photo_urls?JSON.parse(r.photo_urls):(r.photo_url?[r.photo_url]:[]);
+      if(!urls.length)return '<div style="background:#f5f8fc;border-radius:8px;height:50px;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:12px;margin-bottom:12px">No photo attached</div>';
+      return '<div style="display:grid;grid-template-columns:'+(urls.length>1?'1fr 1fr':'1fr')+';gap:6px;margin-bottom:12px">'+
+        urls.map(u=>'<img src="'+u+'" style="width:100%;border-radius:8px;aspect-ratio:1;object-fit:cover">').join('')+'</div>';
+    })()+
     rows+
     '<div style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">'+
     '<button class="btn btn-amber btn-sm" style="flex:2" onclick="App.editRecord(\''+r.id+'\')">&#9998; Edit</button>'+
@@ -1069,7 +1126,7 @@ async function exportStockExcel(){
   ws['!cols']=[{wch:5},{wch:20},{wch:24},{wch:16},{wch:16},{wch:18},{wch:16},{wch:30},{wch:10},{wch:18},{wch:18},{wch:40}];
   ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws,'Stock Reports');
-  XLSX.writeFile(wb,'CPC_Stock_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  const n1=new Date();XLSX.writeFile(wb,'CPC_Stock_'+n1.toISOString().slice(0,10)+'_'+String(n1.getHours()).padStart(2,'0')+String(n1.getMinutes()).padStart(2,'0')+'.xlsx');
   toast('Stock Excel downloaded!');
 }
 async function exportDailyExcel(){
@@ -1084,7 +1141,7 @@ async function exportDailyExcel(){
   ws['!cols']=[{wch:5},{wch:20},{wch:24},{wch:16},{wch:24},{wch:36},{wch:30},{wch:18},{wch:18},{wch:40}];
   ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};
   XLSX.utils.book_append_sheet(wb,ws,'Daily Reports');
-  XLSX.writeFile(wb,'CPC_Daily_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  const n2=new Date();XLSX.writeFile(wb,'CPC_Daily_'+n2.toISOString().slice(0,10)+'_'+String(n2.getHours()).padStart(2,'0')+String(n2.getMinutes()).padStart(2,'0')+'.xlsx');
   toast('Daily Excel downloaded!');
 }
 async function exportSummaryExcel(){
@@ -1104,7 +1161,7 @@ async function exportSummaryExcel(){
   const dh=['No.','Date','Project','Report Type','Contractor','Description','Remarks','On Behalf Of','By','Photo URL'];
   const dr=(dailies||[]).map((r,i)=>[i+1,fmtDt(r.created_at),r.project||'',r.report_type||'',r.contractor||'',r.description||'',r.remarks||'',r.on_behalf_of||'',r.submitted_by_name||'',r.photo_url||'']);
   const ws2=XLSX.utils.aoa_to_sheet([dh,...dr]);ws2['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',state:'frozen'};XLSX.utils.book_append_sheet(wb,ws2,'Daily Reports');
-  XLSX.writeFile(wb,'CPC_Summary_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  const n3=new Date();XLSX.writeFile(wb,'CPC_Summary_'+n3.toISOString().slice(0,10)+'_'+String(n3.getHours()).padStart(2,'0')+String(n3.getMinutes()).padStart(2,'0')+'.xlsx');
   toast('Summary Excel downloaded!');
 }
 
@@ -1226,9 +1283,12 @@ async function runPDF(type){
   for(let i=0;i<recs.length;i++){
     toast('Processing '+(i+1)+'/'+recs.length+'...',4000);
     const r=recs[i];
-    let imgData=null;
-    if(r.photo_url)imgData=await loadImgBase64(r.photo_url);
-    y=drawRow(doc,r,imgData,y,pageW,pageH,type==='stock');
+    const photoUrls=r.photo_urls?JSON.parse(r.photo_urls):(r.photo_url?[r.photo_url]:[]);
+    const imgDatas=[];
+    for(const url of photoUrls){
+      if(url)imgDatas.push(await loadImgBase64(url));
+    }
+    y=drawRow(doc,r,imgDatas[0]||null,y,pageW,pageH,type==='stock');
   }
 
   // Page numbers
@@ -1239,7 +1299,10 @@ async function runPDF(type){
     doc.text('CPC Site Reports — Confidential',12,pageH-5);
     doc.text('Page '+p+' / '+tot,pageW-12,pageH-5,'right');
   }
-  const fname='CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+  const now=new Date();
+  const dateStr=now.toISOString().slice(0,10);
+  const timeStr=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+  const fname='CPC_'+label+'_'+dateStr+'_'+timeStr+'.pdf';
   try{
     const pdfBlob=doc.output('blob');
     const file=new File([pdfBlob],fname,{type:'application/pdf'});
@@ -1460,7 +1523,7 @@ async function shareReport(id){
   }
 }
 
-const App={login,register,logout,show,goBack,setTab,loadPhoto,confirmSubmit,submitStock,submitDaily,saveDraft,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
+const App={login,register,logout,show,goBack,setTab,loadPhoto,addPhotoSlot,removePhoto,confirmSubmit,submitStock,submitDaily,saveDraft,editDraft,editRecord,shareReport,viewRec,deleteRec,addProject,deleteProject,onProjChange,onLocChange,exportStockExcel,exportDailyExcel,exportSummaryExcel,exportStockPDF,exportDailyPDF,loadPickProject,pickProject,goToProjectRecords,saveProfile,forceSignOut};
 
 
 (async()=>{
