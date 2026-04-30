@@ -1202,25 +1202,37 @@ function pdfHeader(doc,pageW,title,today){
 
 // ── PDF: draw one row (photo left, info right) ───────────
 // Returns new Y
-function drawRow(doc,r,imgData,y,pageW,pageH,isStock){
+function drawRow(doc,r,imgDatas,y,pageW,pageH,isStock){
   const margin=10;
-  const rowH=62; // height of each report row
-  const photoW=42; // ~3:4 ratio = 42x56 but we use rowH-4 for height
-  const photoH=rowH-4;
+  const imgs=Array.isArray(imgDatas)?imgDatas.filter(Boolean):(imgDatas?[imgDatas]:[]);
+  const photoW=42;
+  const photoH=42; // each photo height
+  const photoGap=3;
+  const totalPhotoH=imgs.length>0?imgs.length*(photoH+photoGap)-photoGap:photoH;
+  const infoH=62; // minimum info height
+  const rowH=Math.max(totalPhotoH,infoH)+4;
   const infoX=margin+photoW+4;
   const infoW=pageW-infoX-margin;
 
-  if(y+rowH>pageH-12){doc.addPage();pdfHeader(doc,pageW,'',new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'}));y=22;}
+  if(y+rowH>pageH-12){
+    doc.addPage();
+    pdfHeader(doc,pageW,'',new Date().toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'}));
+    y=22;
+  }
 
-  // Row background alternating
+  // Row background
   doc.setFillColor(248,250,253);
   doc.rect(margin,y,pageW-margin*2,rowH,'F');
 
-  // Photo box
-  if(imgData){
-    doc.addImage(imgData,'JPEG',margin,y+2,photoW,photoH,'','FAST');
-    doc.setDrawColor(200,210,225);doc.setLineWidth(0.2);
-    doc.rect(margin,y+2,photoW,photoH);
+  // All photos stacked on left
+  if(imgs.length>0){
+    imgs.forEach((img,pi)=>{
+      if(!img)return;
+      const py=y+2+pi*(photoH+photoGap);
+      doc.addImage(img,'JPEG',margin,py,photoW,photoH,'','FAST');
+      doc.setDrawColor(200,210,225);doc.setLineWidth(0.2);
+      doc.rect(margin,py,photoW,photoH);
+    });
   } else {
     doc.setFillColor(230,235,245);doc.rect(margin,y+2,photoW,photoH,'F');
     doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(160,160,160);
@@ -1228,7 +1240,7 @@ function drawRow(doc,r,imgData,y,pageW,pageH,isStock){
   }
 
   // Info on right
-  const lh=6.8; // line height
+  const lh=6.8;
   let iy=y+6;
   doc.setFontSize(7.5);
 
@@ -1287,8 +1299,9 @@ async function runPDF(type){
     const imgDatas=[];
     for(const url of photoUrls){
       if(url)imgDatas.push(await loadImgBase64(url));
+      else imgDatas.push(null);
     }
-    y=drawRow(doc,r,imgDatas[0]||null,y,pageW,pageH,type==='stock');
+    y=drawRow(doc,r,imgDatas,y,pageW,pageH,type==='stock');
   }
 
   // Page numbers
