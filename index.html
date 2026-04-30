@@ -403,12 +403,20 @@ input[type=file]{display:none}
         <button class="tab"    id="tab-stock" onclick="App.setTab('stock')">Stock</button>
         <button class="tab"    id="tab-daily" onclick="App.setTab('daily')">Daily</button>
       </div>
-      <!-- Project filter -->
-      <div class="fl">
-        <div class="lbl">Filter by Project</div>
-        <select class="inp" id="rec-proj-filter" onchange="App.loadRecords()">
-          <option value="">All Projects</option>
-        </select>
+      <!-- Filters -->
+      <div class="r2">
+        <div class="fl">
+          <div class="lbl">Filter by Month</div>
+          <select class="inp" id="rec-month-filter" onchange="App.loadRecords()">
+            <option value="">All Months</option>
+          </select>
+        </div>
+        <div class="fl">
+          <div class="lbl">Filter by Project</div>
+          <select class="inp" id="rec-proj-filter" onchange="App.loadRecords()">
+            <option value="">All Projects</option>
+          </select>
+        </div>
       </div>
       <!-- Export -->
       <div class="exp-section">
@@ -855,13 +863,34 @@ async function submitDaily(editId){
 async function loadRecords(){
   const list=$('records-list');
   list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading...</span></div>';
+  // Populate month filter
+  const mf=$('rec-month-filter');
+  if(mf){
+    const curM=mf.value;
+    // Generate last 12 months
+    const months=[];
+    const now=new Date();
+    for(let i=0;i<12;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      const lbl=d.toLocaleDateString('en-SG',{month:'long',year:'numeric'});
+      months.push('<option value="'+val+'">'+lbl+'</option>');
+    }
+    mf.innerHTML='<option value="">All Months</option>'+months.join('');
+    if(curM)mf.value=curM;
+    // Default to current month
+    if(!curM){
+      const now2=new Date();
+      mf.value=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+    }
+  }
+  const monthFilter=mf?mf.value:'';
   // Populate project filter dropdown
   const pf=$('rec-proj-filter');
   if(pf&&STATE.projects.length){
     const cur=pf.value;
     pf.innerHTML='<option value="">All Projects</option>'+STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
     if(cur)pf.value=cur;
-    // If coming from project tap on home, pre-select
     if(STATE.selectedProject){pf.value=STATE.selectedProject;STATE.selectedProject=null;}
   }
   const projFilter=pf?pf.value:'';
@@ -870,6 +899,13 @@ async function loadRecords(){
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
   else if(STATE.tab==='daily')q=q.eq('type','daily').neq('status','draft');
   if(projFilter)q=q.eq('project',projFilter);
+  // Apply month filter
+  if(monthFilter){
+    const[yr,mo]=monthFilter.split('-');
+    const start=new Date(yr,mo-1,1).toISOString();
+    const end=new Date(yr,mo,1).toISOString();
+    q=q.gte('created_at',start).lt('created_at',end);
+  }
   const{data,error}=await q;
   STATE.records=data||[];
   if(error){list.innerHTML='<p style="padding:20px;color:var(--danger)">'+error.message+'</p>';return;}
@@ -932,8 +968,29 @@ async function deleteRec(id){
 function getExportProject(){
   const pf=$('rec-proj-filter');return pf?pf.value:'';
 }
+function getExportMonth(){
+  const mf=$('rec-month-filter');return mf?mf.value:'';
+}
 function exportProjectLabel(){
   const p=getExportProject();return p?p:'All Projects';
+}
+function exportMonthLabel(){
+  const m=getExportMonth();
+  if(!m)return 'All Months';
+  const[yr,mo]=m.split('-');
+  return new Date(yr,mo-1,1).toLocaleDateString('en-SG',{month:'long',year:'numeric'});
+}
+function applyExportFilters(q){
+  const proj=getExportProject();
+  const month=getExportMonth();
+  if(proj)q=q.eq('project',proj);
+  if(month){
+    const[yr,mo]=month.split('-');
+    const start=new Date(yr,mo-1,1).toISOString();
+    const end=new Date(yr,mo,1).toISOString();
+    q=q.gte('created_at',start).lt('created_at',end);
+  }
+  return q;
 }
 
 // ── PDF cover page ────────────────────────────────────────
@@ -1002,9 +1059,8 @@ function pdfCoverPage(doc,pageW,pageH,type,recs,projLabel,today){
 // ── EXCEL EXPORTS ────────────────────────────────────────
 async function exportStockExcel(){
   toast('Preparing Stock Excel...',3000);
-  const proj=getExportProject();
   let q=sb.from('reports').select('*').eq('type','stock').neq('status','draft').order('created_at',{ascending:false});
-  if(proj)q=q.eq('project',proj);
+  q=applyExportFilters(q);
   const{data:stocks}=await q;
   const wb=XLSX.utils.book_new();
   const hdr=['No.','Date & Time','Project / Site','From','To','Instructed By','Received By','Items','Qty / Unit','On Behalf Of','Logged By','Photo URL'];
@@ -1018,9 +1074,8 @@ async function exportStockExcel(){
 }
 async function exportDailyExcel(){
   toast('Preparing Daily Excel...',3000);
-  const proj=getExportProject();
   let q=sb.from('reports').select('*').eq('type','daily').neq('status','draft').order('created_at',{ascending:false});
-  if(proj)q=q.eq('project',proj);
+  q=applyExportFilters(q);
   const{data:dailies}=await q;
   const wb=XLSX.utils.book_new();
   const hdr=['No.','Date & Time','Project / Site','Report Type','Contractor','Description','Remarks','On Behalf Of','Logged By','Photo URL'];
@@ -1149,11 +1204,11 @@ function drawRow(doc,r,imgData,y,pageW,pageH,isStock){
 
 async function runPDF(type){
   const label=type==='stock'?'Stock':'Daily';
-  const proj=getExportProject();
   const projLabel=exportProjectLabel();
+  const monthLabel=exportMonthLabel();
   toast('Building '+label+' PDF...',10000);
   let q=sb.from('reports').select('*').eq('type',type).neq('status','draft').order('created_at',{ascending:false});
-  if(proj)q=q.eq('project',proj);
+  q=applyExportFilters(q);
   const{data:recs}=await q;
   if(!recs||!recs.length){toast('No '+label.toLowerCase()+' reports found');return;}
 
