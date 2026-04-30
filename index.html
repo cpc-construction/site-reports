@@ -1239,7 +1239,20 @@ async function runPDF(type){
     doc.text('CPC Site Reports — Confidential',12,pageH-5);
     doc.text('Page '+p+' / '+tot,pageW-12,pageH-5,'right');
   }
-  doc.save('CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+  const fname='CPC_'+label+'_'+new Date().toISOString().slice(0,10)+'.pdf';
+  try{
+    const pdfBlob=doc.output('blob');
+    const file=new File([pdfBlob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      toast('Opening share sheet...',3000);
+      await navigator.share({title:'CPC '+label+' Report',text:'CPC Site Reports — '+projLabel,files:[file]});
+      toast(label+' PDF shared!');return;
+    }
+  }catch(e){
+    if(e.name==='AbortError')return;
+    console.log('Share not supported:',e);
+  }
+  doc.save(fname);
   toast(label+' PDF downloaded!');
 }
 const exportStockPDF=()=>runPDF('stock');
