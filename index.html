@@ -930,11 +930,7 @@ async function loadRecords(){
     }
     mf.innerHTML='<option value="">All Months</option>'+months.join('');
     if(curM)mf.value=curM;
-    // Default to current month
-    if(!curM){
-      const now2=new Date();
-      mf.value=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
-    }
+    // No default - show all records unless user picks a month
   }
   const monthFilter=mf?mf.value:'';
   // Populate project filter dropdown
@@ -951,10 +947,9 @@ async function loadRecords(){
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
   else if(STATE.tab==='daily')q=q.eq('type','daily').neq('status','draft');
   if(projFilter)q=q.eq('project',projFilter);
-  // Apply month filter (use UTC+8 offset for Singapore)
+  // Apply month filter (Singapore UTC+8)
   if(monthFilter){
     const[yr,mo]=monthFilter.split('-');
-    // Singapore is UTC+8, so start of month in SG = previous day 16:00 UTC
     const start=new Date(Date.UTC(parseInt(yr),parseInt(mo)-1,1)-8*3600*1000).toISOString();
     const end=new Date(Date.UTC(parseInt(yr),parseInt(mo),1)-8*3600*1000).toISOString();
     q=q.gte('created_at',start).lt('created_at',end);
