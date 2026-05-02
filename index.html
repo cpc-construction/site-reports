@@ -931,18 +931,26 @@ async function loadRecords(){
     mf.innerHTML='<option value="">All Months</option>'+months.join('');
   }
 
-  // Only rebuild project dropdown if needed
-  if(pf&&STATE.projects.length&&pf.options.length<=1){
-    pf.innerHTML='<option value="">All Projects</option>'+STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
-  }
-  if(STATE.selectedProject&&pf){
-    pf.value=STATE.selectedProject;
-    STATE.selectedProject=null;
+  // Rebuild project dropdown preserving selection
+  if(pf){
+    const curProjVal=pf.value;
+    if(STATE.projects.length){
+      pf.innerHTML='<option value="">All Projects</option>'+
+        STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
+    }
+    // Restore selection after rebuild
+    if(STATE.selectedProject){
+      pf.value=STATE.selectedProject;
+      STATE.selectedProject=null;
+    } else if(curProjVal){
+      pf.value=curProjVal;
+    }
   }
 
-  // Read filter values - these are already set by user interaction
+  // Read filter values after dropdowns settled
   const monthFilter=mf?mf.value:'';
   const projFilter=pf?pf.value:'';
+  console.log('Filters - month:',monthFilter,'project:',projFilter);
   let q=sb.from('reports').select('*').order('created_at',{ascending:false});
   if(STATE.tab==='draft')q=q.eq('status','draft');
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
