@@ -915,34 +915,32 @@ async function submitDaily(editId){
 async function loadRecords(){
   const list=$('records-list');
   list.innerHTML='<div class="ld"><div class="spin"></div><span>Loading...</span></div>';
-  // Read current filter values BEFORE rebuilding dropdowns
   const mf=$('rec-month-filter');
   const pf=$('rec-proj-filter');
-  const savedMonth=mf?mf.value:'';
-  const savedProj=pf?pf.value:'';
 
-  // Populate month filter
-  if(mf){
+  // Only populate dropdowns if empty (first load)
+  if(mf&&mf.options.length<=1){
     const months=[];
     const now=new Date();
     for(let i=0;i<12;i++){
       const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-      const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      const v=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
       const lbl=d.toLocaleDateString('en-SG',{month:'long',year:'numeric'});
-      months.push('<option value="'+val+'">'+lbl+'</option>');
+      months.push('<option value="'+v+'">'+lbl+'</option>');
     }
     mf.innerHTML='<option value="">All Months</option>'+months.join('');
-    if(savedMonth)mf.value=savedMonth;
   }
-  const monthFilter=savedMonth;
 
-  // Populate project filter dropdown
   if(pf&&STATE.projects.length){
+    const curProj=pf.value;
     pf.innerHTML='<option value="">All Projects</option>'+STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
-    if(savedProj)pf.value=savedProj;
+    if(curProj)pf.value=curProj;
     if(STATE.selectedProject){pf.value=STATE.selectedProject;STATE.selectedProject=null;}
   }
-  const projFilter=savedProj;
+
+  // Read filter values AFTER dropdowns are built
+  const monthFilter=mf?mf.value:'';
+  const projFilter=pf?pf.value:'';
   let q=sb.from('reports').select('*').order('created_at',{ascending:false});
   if(STATE.tab==='draft')q=q.eq('status','draft');
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
