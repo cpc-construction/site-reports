@@ -931,14 +931,16 @@ async function loadRecords(){
     mf.innerHTML='<option value="">All Months</option>'+months.join('');
   }
 
-  if(pf&&STATE.projects.length){
-    const curProj=pf.value;
+  // Only rebuild project dropdown if needed
+  if(pf&&STATE.projects.length&&pf.options.length<=1){
     pf.innerHTML='<option value="">All Projects</option>'+STATE.projects.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
-    if(curProj)pf.value=curProj;
-    if(STATE.selectedProject){pf.value=STATE.selectedProject;STATE.selectedProject=null;}
+  }
+  if(STATE.selectedProject&&pf){
+    pf.value=STATE.selectedProject;
+    STATE.selectedProject=null;
   }
 
-  // Read filter values AFTER dropdowns are built
+  // Read filter values - these are already set by user interaction
   const monthFilter=mf?mf.value:'';
   const projFilter=pf?pf.value:'';
   let q=sb.from('reports').select('*').order('created_at',{ascending:false});
