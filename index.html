@@ -951,11 +951,12 @@ async function loadRecords(){
   else if(STATE.tab==='stock')q=q.eq('type','stock').neq('status','draft');
   else if(STATE.tab==='daily')q=q.eq('type','daily').neq('status','draft');
   if(projFilter)q=q.eq('project',projFilter);
-  // Apply month filter
+  // Apply month filter (use UTC+8 offset for Singapore)
   if(monthFilter){
     const[yr,mo]=monthFilter.split('-');
-    const start=new Date(yr,mo-1,1).toISOString();
-    const end=new Date(yr,mo,1).toISOString();
+    // Singapore is UTC+8, so start of month in SG = previous day 16:00 UTC
+    const start=new Date(Date.UTC(parseInt(yr),parseInt(mo)-1,1)-8*3600*1000).toISOString();
+    const end=new Date(Date.UTC(parseInt(yr),parseInt(mo),1)-8*3600*1000).toISOString();
     q=q.gte('created_at',start).lt('created_at',end);
   }
   const{data,error}=await q;
